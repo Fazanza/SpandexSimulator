@@ -1,4 +1,5 @@
 from trace import Trace
+from trace import Helper
 
 class Core:
     def __init__(self, _id: int):
@@ -10,4 +11,4 @@ class Core:
     accessed between X and Y is less than 75% of cache capacity)
     '''
     def reuse_possible(self, t1: Trace, t2: Trace) -> bool:
-        return False
+        return Helper.same_core(t1, t2)
