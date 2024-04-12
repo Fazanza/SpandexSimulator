@@ -1,0 +1,444 @@
+current_partition:0
+st 59 51 gpu_1
+ld 68 gpu_1
+st 86 51 gpu_1
+ld 26 gpu_1
+st 33 51 gpu_1
+st 46 51 gpu_1
+ld 125 gpu_1
+ld 173 gpu_1
+ld 78 gpu_1
+st 182 51 gpu_1
+st 200 51 gpu_1
+st 157 51 gpu_1
+ld 117 gpu_1
+st 44 51 gpu_1
+st 180 51 gpu_1
+st 121 51 gpu_1
+st 109 51 gpu_1
+st 37 51 gpu_1
+ld 22 gpu_1
+ld 88 gpu_1
+st 109 51 gpu_1
+ld 158 gpu_1
+st 150 51 gpu_1
+st 125 51 gpu_1
+ld 94 gpu_1
+ld 66 gpu_1
+st 96 51 gpu_1
+st 57 51 gpu_1
+st 141 51 gpu_1
+ld 15 gpu_1
+st 173 51 gpu_1
+st 81 51 gpu_1
+st 177 51 gpu_1
+ld 146 gpu_1
+st 163 51 gpu_1
+ld 17 gpu_1
+st 35 51 gpu_1
+st 176 51 gpu_1
+st 136 51 gpu_1
+ld 19 gpu_1
+st 0 51 gpu_1
+ld 41 gpu_1
+st 85 51 gpu_1
+st 165 51 gpu_1
+ld 99 gpu_1
+st 65 51 gpu_1
+st 13 51 gpu_1
+st 107 51 gpu_1
+st 77 51 gpu_1
+ld 108 gpu_1
+ld 193 gpu_1
+st 138 51 gpu_1
+ld 177 gpu_1
+ld 61 gpu_1
+st 125 51 gpu_1
+st 62 51 gpu_1
+st 32 51 gpu_1
+st 90 51 gpu_1
+st 57 51 gpu_1
+st 94 51 gpu_1
+st 110 51 gpu_1
+st 73 51 gpu_1
+st 20 51 gpu_1
+ld 129 gpu_1
+st 62 51 gpu_1
+st 43 51 gpu_1
+ld 85 gpu_1
+ld 94 gpu_1
+ld 6 gpu_1
+ld 71 gpu_1
+st 132 51 gpu_1
+ld 38 gpu_1
+ld 186 gpu_1
+st 130 51 gpu_1
+st 5 51 gpu_1
+ld 7 gpu_1
+ld 47 gpu_1
+ld 103 gpu_1
+st 81 51 gpu_1
+st 162 51 gpu_1
+st 124 51 gpu_1
+st 192 51 gpu_1
+st 60 51 gpu_1
+ld 38 gpu_1
+st 58 51 gpu_1
+ld 191 gpu_1
+ld 157 gpu_1
+ld 29 gpu_1
+ld 42 gpu_1
+st 80 51 gpu_1
+st 159 51 gpu_1
+ld 139 gpu_1
+ld 181 gpu_1
+st 82 51 gpu_1
+ld 112 gpu_1
+st 186 51 gpu_1
+ld 11 gpu_1
+ld 141 gpu_1
+st 157 51 gpu_1
+ld 10 gpu_1
+st 62 51 gpu_1
+st 171 51 gpu_1
+ld 66 gpu_1
+st 165 51 gpu_1
+st 159 51 gpu_1
+st 95 51 gpu_1
+st 40 51 gpu_1
+ld 23 gpu_1
+st 148 51 gpu_1
+st 196 51 gpu_1
+st 117 51 gpu_1
+ld 53 gpu_1
+ld 72 gpu_1
+st 128 51 gpu_1
+st 132 51 gpu_1
+ld 174 gpu_1
+st 110 51 gpu_1
+ld 39 gpu_1
+ld 55 gpu_1
+st 190 51 gpu_1
+ld 84 gpu_1
+st 95 51 gpu_1
+ld 129 gpu_1
+ld 105 gpu_1
+ld 23 gpu_1
+ld 145 gpu_1
+st 137 51 gpu_1
+ld 31 gpu_1
+st 157 51 gpu_1
+ld 40 gpu_1
+st 39 51 gpu_1
+st 134 51 gpu_1
+st 195 51 gpu_1
+ld 200 gpu_1
+st 56 51 gpu_1
+st 25 51 gpu_1
+st 67 51 gpu_1
+st 54 51 gpu_1
+ld 52 gpu_1
+st 154 51 gpu_1
+ld 43 gpu_1
+st 103 51 gpu_1
+st 162 51 gpu_1
+ld 30 gpu_1
+ld 74 gpu_1
+ld 112 gpu_1
+st 19 51 gpu_1
+st 126 51 gpu_1
+ld 122 gpu_1
+ld 5 gpu_1
+st 173 51 gpu_1
+st 173 51 gpu_1
+st 16 51 gpu_1
+st 105 51 gpu_1
+st 48 51 gpu_1
+ld 28 gpu_1
+st 56 51 gpu_1
+ld 56 gpu_1
+ld 39 gpu_1
+st 149 51 gpu_1
+ld 52 gpu_1
+st 131 51 gpu_1
+st 81 51 gpu_1
+ld 154 gpu_1
+st 92 51 gpu_1
+ld 124 gpu_1
+st 33 51 gpu_1
+st 95 51 gpu_1
+st 184 51 gpu_1
+st 101 51 gpu_1
+st 199 51 gpu_1
+ld 138 gpu_1
+st 17 51 gpu_1
+st 199 51 gpu_1
+ld 81 gpu_1
+ld 118 gpu_1
+st 172 51 gpu_1
+ld 1 gpu_1
+ld 99 gpu_1
+st 143 51 gpu_1
+st 58 51 gpu_1
+ld 101 gpu_1
+ld 159 gpu_1
+ld 148 gpu_1
+st 192 51 gpu_1
+ld 138 gpu_1
+ld 1 gpu_1
+ld 31 gpu_1
+st 1 51 gpu_1
+ld 132 gpu_1
+st 68 51 gpu_1
+ld 23 gpu_1
+ld 13 gpu_1
+st 128 51 gpu_1
+st 128 51 gpu_1
+ld 108 gpu_1
+ld 77 gpu_1
+ld 192 gpu_1
+st 57 51 gpu_1
+st 22 51 gpu_1
+ld 10 gpu_1
+ld 191 gpu_1
+ld 107 gpu_1
+st 46 51 gpu_1
+st 22 51 gpu_1
+ld 53 gpu_1
+st 7 51 gpu_1
+ld 139 gpu_1
+st 59 51 gpu_1
+st 40 51 gpu_1
+st 191 51 gpu_1
+st 199 51 gpu_1
+st 143 51 gpu_1
+st 55 51 gpu_1
+st 22 51 gpu_1
+ld 39 gpu_1
+ld 31 gpu_1
+ld 6 gpu_1
+st 172 51 gpu_1
+st 22 51 gpu_1
+barrier_2 3
+current_partition:6
+ld 1392 gpu_1
+ld 1210 gpu_1
+st 1350 51 gpu_1
+st 1320 51 gpu_1
+ld 1293 gpu_1
+st 1357 51 gpu_1
+st 1222 51 gpu_1
+st 1315 51 gpu_1
+st 1345 51 gpu_1
+st 1258 51 gpu_1
+ld 1283 gpu_1
+st 1282 51 gpu_1
+ld 1333 gpu_1
+st 1315 51 gpu_1
+st 1363 51 gpu_1
+st 1213 51 gpu_1
+st 1326 51 gpu_1
+st 1217 51 gpu_1
+ld 1209 gpu_1
+ld 1229 gpu_1
+st 1340 51 gpu_1
+st 1400 51 gpu_1
+ld 1216 gpu_1
+ld 1282 gpu_1
+ld 1201 gpu_1
+st 1396 51 gpu_1
+st 1307 51 gpu_1
+ld 1347 gpu_1
+ld 1240 gpu_1
+ld 1219 gpu_1
+st 1368 51 gpu_1
+st 1253 51 gpu_1
+st 1260 51 gpu_1
+st 1217 51 gpu_1
+ld 1352 gpu_1
+ld 1369 gpu_1
+st 1270 51 gpu_1
+st 1276 51 gpu_1
+ld 1236 gpu_1
+st 1363 51 gpu_1
+st 1361 51 gpu_1
+st 1344 51 gpu_1
+st 1364 51 gpu_1
+st 1234 51 gpu_1
+ld 1352 gpu_1
+ld 1200 gpu_1
+st 1279 51 gpu_1
+ld 1307 gpu_1
+ld 1253 gpu_1
+ld 1375 gpu_1
+ld 1300 gpu_1
+st 1253 51 gpu_1
+st 1353 51 gpu_1
+ld 1335 gpu_1
+st 1315 51 gpu_1
+st 1307 51 gpu_1
+st 1318 51 gpu_1
+st 1242 51 gpu_1
+ld 1397 gpu_1
+ld 1342 gpu_1
+st 1389 51 gpu_1
+st 1399 51 gpu_1
+ld 1301 gpu_1
+st 1329 51 gpu_1
+st 1271 51 gpu_1
+ld 1280 gpu_1
+st 1353 51 gpu_1
+ld 1305 gpu_1
+ld 1255 gpu_1
+ld 1208 gpu_1
+st 1203 51 gpu_1
+st 1342 51 gpu_1
+st 1352 51 gpu_1
+ld 1303 gpu_1
+ld 1385 gpu_1
+st 1319 51 gpu_1
+st 1390 51 gpu_1
+st 1263 51 gpu_1
+st 1308 51 gpu_1
+ld 1327 gpu_1
+st 1204 51 gpu_1
+st 1348 51 gpu_1
+st 1368 51 gpu_1
+st 1359 51 gpu_1
+ld 1272 gpu_1
+st 1385 51 gpu_1
+ld 1308 gpu_1
+st 1262 51 gpu_1
+ld 1309 gpu_1
+st 1344 51 gpu_1
+ld 1395 gpu_1
+st 1205 51 gpu_1
+ld 1304 gpu_1
+st 1231 51 gpu_1
+ld 1298 gpu_1
+st 1233 51 gpu_1
+st 1396 51 gpu_1
+st 1374 51 gpu_1
+ld 1344 gpu_1
+ld 1389 gpu_1
+ld 1371 gpu_1
+ld 1274 gpu_1
+ld 1257 gpu_1
+st 1269 51 gpu_1
+ld 1385 gpu_1
+st 1271 51 gpu_1
+ld 1375 gpu_1
+ld 1344 gpu_1
+st 1298 51 gpu_1
+st 1310 51 gpu_1
+st 1279 51 gpu_1
+st 1200 51 gpu_1
+ld 1399 gpu_1
+ld 1305 gpu_1
+ld 1261 gpu_1
+st 1268 51 gpu_1
+ld 1386 gpu_1
+ld 1207 gpu_1
+ld 1246 gpu_1
+ld 1333 gpu_1
+st 1328 51 gpu_1
+ld 1394 gpu_1
+ld 1348 gpu_1
+st 1290 51 gpu_1
+st 1269 51 gpu_1
+ld 1204 gpu_1
+ld 1315 gpu_1
+ld 1204 gpu_1
+ld 1256 gpu_1
+st 1284 51 gpu_1
+st 1218 51 gpu_1
+st 1249 51 gpu_1
+ld 1314 gpu_1
+ld 1247 gpu_1
+ld 1275 gpu_1
+st 1379 51 gpu_1
+st 1278 51 gpu_1
+st 1200 51 gpu_1
+ld 1261 gpu_1
+st 1351 51 gpu_1
+ld 1258 gpu_1
+st 1335 51 gpu_1
+ld 1366 gpu_1
+st 1239 51 gpu_1
+ld 1327 gpu_1
+st 1325 51 gpu_1
+st 1300 51 gpu_1
+ld 1272 gpu_1
+ld 1277 gpu_1
+ld 1293 gpu_1
+ld 1374 gpu_1
+st 1353 51 gpu_1
+ld 1360 gpu_1
+ld 1361 gpu_1
+ld 1313 gpu_1
+st 1286 51 gpu_1
+ld 1341 gpu_1
+st 1263 51 gpu_1
+st 1260 51 gpu_1
+st 1212 51 gpu_1
+st 1275 51 gpu_1
+ld 1290 gpu_1
+ld 1343 gpu_1
+ld 1307 gpu_1
+st 1255 51 gpu_1
+ld 1339 gpu_1
+st 1318 51 gpu_1
+st 1263 51 gpu_1
+ld 1273 gpu_1
+st 1365 51 gpu_1
+st 1246 51 gpu_1
+ld 1364 gpu_1
+ld 1315 gpu_1
+st 1378 51 gpu_1
+st 1333 51 gpu_1
+st 1252 51 gpu_1
+st 1215 51 gpu_1
+ld 1243 gpu_1
+ld 1345 gpu_1
+st 1342 51 gpu_1
+st 1263 51 gpu_1
+st 1247 51 gpu_1
+ld 1359 gpu_1
+st 1275 51 gpu_1
+st 1369 51 gpu_1
+st 1260 51 gpu_1
+ld 1342 gpu_1
+ld 1277 gpu_1
+st 1396 51 gpu_1
+ld 1397 gpu_1
+ld 1371 gpu_1
+ld 1397 gpu_1
+st 1205 51 gpu_1
+ld 1347 gpu_1
+ld 1308 gpu_1
+ld 1270 gpu_1
+ld 1379 gpu_1
+st 1390 51 gpu_1
+ld 1255 gpu_1
+st 1310 51 gpu_1
+ld 1275 gpu_1
+ld 1201 gpu_1
+ld 1212 gpu_1
+st 1217 51 gpu_1
+ld 1293 gpu_1
+st 1350 51 gpu_1
+st 1270 51 gpu_1
+ld 1255 gpu_1
+ld 1215 gpu_1
+st 1325 51 gpu_1
+st 1275 51 gpu_1
+ld 1314 gpu_1
+st 1396 51 gpu_1
+st 1328 51 gpu_1
+st 1204 51 gpu_1
+ld 1378 gpu_1
+ld 1357 gpu_1
+ld 1240 gpu_1
+ld 1300 gpu_1
+st 1375 51 gpu_1
+barrier_0 1
