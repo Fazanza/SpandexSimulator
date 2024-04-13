@@ -2,7 +2,6 @@
 Each cores accessing different regions on array
 Multiple barriers, at least two cores waiting on one barrier
 Still need acquire and release for gpu traces?
-
 """
 
 import random
@@ -12,7 +11,7 @@ array_length = 1600
 cpu_cores = 4
 gpu_cores = 4
 total_cores = cpu_cores + gpu_cores
-iteration = 2
+iteration = 10
 ## generate access patterns
 partition_range = int(array_length/(total_cores))
 mem_type = ["ld","st"]
@@ -43,7 +42,7 @@ for iter in range(iteration):
     total_cores_left = total_cores
     for barrier in range(barrier_num):
         core_num_per_barrier_upper_limit = total_cores_left - ((barrier_num-barrier-1) * 2)
-        
+
         core_num_per_barrier = random.randint(2,core_num_per_barrier_upper_limit)
         # print(f"iter: {iter}, total_cores_left: {total_cores_left}, barrier: {barrier}, upper_limit: {core_num_per_barrier_upper_limit}, actual_num: {core_num_per_barrier}")
         if barrier == barrier_num-1:
@@ -51,8 +50,9 @@ for iter in range(iteration):
         else:
             barrier_allocations.append(core_num_per_barrier)
         total_cores_left = total_cores_left - core_num_per_barrier
-    
+
     ## check exceptions
+    print(f"Iter:{iter}, barrier_allocations:{barrier_allocations}")
     check_total_core_for_barrier(barrier_allocations)
     check_cores_per_barrier(barrier_allocations)
 
@@ -61,7 +61,7 @@ for iter in range(iteration):
 
     mode = "w" if iter == 0 else "a"
 
-    remain_barriers = barrier_allocations
+    remain_barriers = barrier_allocations.copy()
     # print(remain_barriers)
 
     ## randomly choose cores for barrier
@@ -69,7 +69,7 @@ for iter in range(iteration):
         assigned_barrier = random.choice(range(len(remain_barriers)))
         while remain_barriers[assigned_barrier] == 0:
             assigned_barrier = random.choice(range(len(remain_barriers)))
-        
+
         unique_address = []
         density_count = 0
         stored_value = cpu_id*10 + 1
@@ -97,17 +97,18 @@ for iter in range(iteration):
                     fh.write(f"{op_type} {address} cpu_{cpu_id}\n")
                 else:
                     fh.write(f"{op_type} {address} {stored_value} cpu_{cpu_id}\n")
-            
-            fh.write(f"barrier_{assigned_barrier} {barrier_allocations[assigned_barrier]}\n")
+
+            fh.write(f"iter:{iter} barrier_{assigned_barrier} {barrier_allocations[assigned_barrier]}\n")
+            fh.write(f"\n")
             remain_barriers[assigned_barrier] = remain_barriers[assigned_barrier] - 1
             print(remain_barriers)
-    
+
 
     for gpu_id in range(gpu_cores):
         assigned_barrier = random.choice(range(len(remain_barriers)))
         while remain_barriers[assigned_barrier] == 0:
             assigned_barrier = random.choice(range(len(remain_barriers)))
-        
+
         unique_address = []
         density_count = 0
 
@@ -135,8 +136,9 @@ for iter in range(iteration):
                     fh.write(f"{op_type} {address} gpu_{gpu_id}\n")
                 else:
                     fh.write(f"{op_type} {address} {stored_value} gpu_{gpu_id}\n")
-            
-            fh.write(f"barrier_{assigned_barrier} {barrier_allocations[assigned_barrier]}\n")
+
+            fh.write(f"iter:{iter} barrier_{assigned_barrier} {barrier_allocations[assigned_barrier]}\n")
+            fh.write(f"\n")
             remain_barriers[assigned_barrier] = remain_barriers[assigned_barrier] - 1
             print(remain_barriers)
 

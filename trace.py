@@ -1,12 +1,16 @@
 from enum import Enum
 from typing import Optional
 
+from core import BLOCK_SIZE
 from main import traces
 
 
 class Inst(Enum):
     load = 1
     store = 2
+    barrier = 3
+    acquire = 4
+    release = 5
 
 
 class ProcType(Enum):
@@ -79,6 +83,13 @@ class Helper:
     '''
     @staticmethod
     def next_block_conflict(t1: Trace) -> Optional[Trace]:
+        curIndex: int = t1.index
+        while curIndex < len(traces) - 1:
+            curIndex = curIndex + 1
+            if traces[curIndex].core != t1.core:
+                continue
+            if traces[curIndex].addr % BLOCK_SIZE == 0:
+                return traces[curIndex]
         return None
 
     '''
@@ -100,6 +111,7 @@ class Helper:
         while curIndex >= 0:
             if t1.addr == traces[curIndex].addr:
                 return traces[curIndex]
+            curIndex = curIndex - 1
         return None
 
     '''
@@ -111,6 +123,15 @@ class Helper:
     '''
     @staticmethod
     def sync_possible(t1: Trace, t2: Trace) -> bool:
+        if t1.core != t2.core:
+            return False
+
+        if t1.inst == Inst.load and t2.inst == Inst.acquire:
+            return True
+
+        if t1.inst == Inst.store and t2.inst == Inst.release:
+            return True
+
         return False
 
     '''
@@ -119,10 +140,11 @@ class Helper:
     @staticmethod
     def criticality(t1: Trace) -> int:
         if t1.inst != Inst.load:
-            return 2
+            return 1
 
         if t1.proctype == ProcType.CPU:
             return 6
+
         if t1.proctype == ProcType.GPU:
             return 2
 
