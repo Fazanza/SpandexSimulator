@@ -442,3 +442,83 @@ ld 1240 gpu_1
 ld 1300 gpu_1
 st 1375 51 gpu_1
 barrier_0 1
+
+
+def do_transition(self, current_state, input_msg, old_owner):
+        self.generated_msg_queue.clear()
+        msg_src = input_msg.src
+        msg_addr = input_msg.addr
+        owner = old_owner
+        
+        ###########################################################
+        if current_state == State.I:
+            mem_msg = msg(msg_type.MemReq, msg_addr, Node.LLC, Node.MEM, self.clk_cnt + self.mem_delay)
+            ###
+            if input_msg.msg_type == msg_type.ReqV:
+                if self.add_new_line(msg_addr) == False:
+                    self.cache.updateState_line(msg_addr, State.I_I_V)
+                else:
+                    self.cache.updateState_line_word(msg_addr, State.IV)
+                    self.mem_req_queue.enqueue(mem_msg)
+                self.cache.updateMsgDst(msg_addr, msg_src)
+            ###
+            elif input_msg.msg_type == msg_type.ReqS:
+                if self.add_new_line(msg_addr) == False:
+                    self.cache.updateState_line(msg_addr, State.I_I_S)
+                else:
+                    self.cache.updateState_line_word(msg_addr, State.IS)
+                    self.mem_req_queue.enqueue(mem_msg)
+                self.cache.updateMsgDst(msg_addr, msg_src)
+            ###
+            elif input.msg.msg_type == msg_type.ReqWT:
+                if self.add_new_line(msg_addr) == False:
+                    self.cache.updateState_line(msg_addr, State.I_I_VI)
+                else:
+                    self.cache.updateState_line(msg_addr, State.VI)
+                    self.cache.updateState_word(msg_addr, State.V)
+                    msg = msg(msg_type.RepWT, msg_addr, Node.LLC, msg_src, 0)
+                    self.generated_msg_queue.enqueue(msg)
+            ###
+            elif input_msg.msg_type == msg_type.ReqOdata:
+                if self.add_new_line(msg_addr) == False:
+                    self.cache.updateState_line(msg_addr, State.I_I_O)
+                else:
+                    self.cache.updateState_line_word(msg_addr, State.IO)
+                    self.mem_req_queue.enqueue(mem_msg)
+                self.cache.updateMsgDst(msg_addr, msg_src)
+            ###
+            elif input_msg.msg_type == msg_type.ReqWB:
+                msg = msg(msg_type.RepWB, msg_addr, Node.LLC, msg_src, 0)
+                self.generated_msg_queue.enqueue(msg)
+            else:
+                return type.Block
+        
+        ###########################################################
+        elif current_state == State.I_I_V:
+            ###
+            if input.msg_type == msg_type.ReqWT:
+                self.cache.updateState_word(msg_addr, State.V)
+                msg = msg(msg_type.RepWT, msg_addr, Node.LLC, msg_src, 0)
+                self.generated_msg_queue.enqueue(msg)
+            ###
+            elif input.msg_type == msg_type.InvAck:
+                self.inv_cnt = self.inv_cnt - 1
+                if self.inv_cnt == 0:
+                    mem_msg = msg(msg_type.MemReq, msg_addr, Node.LLC, Node.MEM, self.clk_cnt + self.mem_delay)
+                    self.mem_req_queue.enqueue(mem_msg)
+                    self.cache.updateState_line_word(msg_addr, State.IV)
+            ###
+            elif input.msg_type == msg_type.ReqWB:
+                msg = msg(msg_type.RepWB, msg_addr, Node.LLC, msg_src, 0)
+                self.generated_msg_queue.enqueue(msg)
+                
+        ###########################################################
+        elif current_state == State.V:
+            if input_msg.msg_type == msg_type.ReqV:
+                msg = msg(msg_type.RepV, msg_addr, Node.LLC, msg_src, 0)
+                self.generated_msg_queue.enqueue(msg)
+            elif input_msg.msg_type == msg_type.RepS:
+                msg = msg(msg_type.RepS, msg_addr, Node.LLC, msg_src, 0)
+                self.generated_msg_queue.enqueue(msg)
+            elif input_msg.msg_type == msg_type.RepWT:
+                msg = msg(msg_type.Re)
