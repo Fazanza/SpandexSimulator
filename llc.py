@@ -31,7 +31,7 @@ class LLC_Controller:
     ## llc can not taken a new request if there is a pending request on this addr
     def is_req_qualify(self, addr):
         state = self.cache.getState_line(addr)
-        if state == State.I | state == State.O | state == State.V | state == State.S | state == State.VI:
+        if state == State.I or state == State.O or state == State.V or state == State.S or state == State.VI:
             return True
         else:
             return False
@@ -70,7 +70,7 @@ class LLC_Controller:
     
     # for getting new request from another node
     def receieve_req_msg(self, msg_type, addr, src, dst, ackcnt, fwd_dst):
-        msg = msg(msg_type, addr, src, dst, ackcnt, fwd_dst)
+        msg = req_msg(msg_type, addr, src, dst, ackcnt, fwd_dst, self.clk_cnt)
         if self.req_msg_box.isfull():
             return False
         else:
@@ -82,8 +82,6 @@ class LLC_Controller:
             return None
         else:
             new_req = self.pick(self.req_msg_box.get_content())
-            if new_req != None:
-                self.req_msg_box.remove(new_req)
             return new_req
 
     ###### come from Response queue
@@ -602,12 +600,15 @@ class LLC_Controller:
         ## first handle one response from req_msg_box
         rep_msg = self.get_new_rep()
         if rep_msg != None:
+            assert rep_msg.msg_type == msg_type.InvAck  or rep_msg.msg_type == msg_type.RepRvkO, "LLC response box has wrong msg_type"
             current_state, owner = self.get_current_state(rep_msg)
             self.do_transition(current_state, rep_msg, owner)
+            
             
         ## second handle one response from mem_msg_queue
         mem_msg = self.get_mem_msg
         if mem_msg != None:
+            assert mem_msg.msg_type == msg_type.MemRep, "LLC mem box has wrong msg_type"
             current_state, owner = self.get_current_state(mem_msg)
             self.do_transition(current_state, mem_msg, owner)
             
@@ -615,7 +616,8 @@ class LLC_Controller:
         req_msg = self.get_new_req()
         if req_msg != None:
             current_state, owner = self.get_current_state(req_msg)
-            self.do_transition(current_state, req_msg, owner)
+            if self.do_transition(current_state, req_msg, owner) == type.Success:
+                self.req_msg_box.remove(req_msg)
         
         ## clk_cnt ++
         self.clk_cnt = self.clk_cnt + 1
