@@ -2,12 +2,14 @@ import math
 from enum import Enum, auto
 import random
 from collections import deque
-from llc_utility import *
+from gpu_utility import *
 
-class LLC_Controller:
+
+
+class GPU_Controller:
 
     def __init__(self, cache_size, ways, line_size, memory_size, req_box_size, res_box_size):
-        self.cache      = dir_cache(cache_size, ways, line_size, memory_size)
+        self.cache      = GPU_cache(cache_size, ways, line_size, memory_size)
         self.req_msg_box    =  MessageBuffer(req_box_size)
         self.res_msg_box    =  MessageBuffer(res_box_size)
 
