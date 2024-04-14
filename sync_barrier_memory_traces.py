@@ -2,7 +2,6 @@
 
 import random
 
-
 ## Parameters
 cpu_core = 3
 gpu_core = 1
@@ -62,11 +61,11 @@ for cpu_id in range(cpu_core):
         no_opreations_necessary = len(available_partition) * partition_range * 2
         with open(f"cpu_{cpu_id}.txt", mode) as fh:
             for action in range(no_opreations_necessary):
-                chosen_partition = random.choice(available_partition)
+                mem = random.choice(mem_type)
+                chosen_partition = random.choice(available_partition) if mem == "st" else random.choice(range(total_barriers))
                 index_start = chosen_partition * partition_range
                 index_end = (chosen_partition+1) * partition_range - 1 if (chosen_partition < total_barriers) else (array_length-1)
                 address = random.randint(index_start, index_end)
-                mem = random.choice(mem_type)
                 stored_value = random.randint(1,100)
                 if mem == "ld":
                     fh.write(f"{mem} {address}\n")
