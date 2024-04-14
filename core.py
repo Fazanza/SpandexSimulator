@@ -1,10 +1,7 @@
-from trace import Trace
-from trace import Helper
-from main import traces
-
-CACHE_SIZE = 1024
-BLOCK_SIZE = 4
-
+from globals import Trace
+from globals import traces
+from globals import CACHE_SIZE
+from globals import BLOCK_SIZE
 
 class Core:
     def __init__(self, _id: int):

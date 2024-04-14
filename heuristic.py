@@ -1,7 +1,7 @@
-from trace import Trace
-from trace import ProcType
-from trace import Helper
+from globals import Trace
+from globals import ProcType
 from core import Core
+from helper import Helper
 
 '''
 Returns true if ownership for t1 is likely to improve overall performance
