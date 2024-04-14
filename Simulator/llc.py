@@ -1,10 +1,9 @@
-import math
 from enum import Enum, auto
 import random
 from collections import deque
 from llc_utility import *
 from llc import *
-from llc_header import *
+
 
 ## for request there is always an time stamp
 class LLC_Controller:
@@ -12,7 +11,6 @@ class LLC_Controller:
     offset = 0
     generated_msg_queue = Queue() # queue for msg generated after LLC has processed one msg, it should be dequeued if msg has been taken out from queue
     mem_req_queue = Queue()
-    res_msg_box   = Queue() # the response to LLC
     rep_msg_box   = Queue() # only get reply msg
     inv_cnt = 0
     clk_cnt = 0
@@ -84,19 +82,6 @@ class LLC_Controller:
             new_req = self.pick(self.req_msg_box.get_content())
             return new_req
 
-    ###### come from Response queue
-    # for getting new response from another node
-    def receieve_res_msg(self, msg_type, addr, src, dst, ackcnt, fwd_dst):
-        msg = msg(msg_type, addr, src, dst, ackcnt, fwd_dst)
-        self.res_msg_box.enqueue(msg)
-
-    # get a reponse from reponse queue to execute
-    def get_new_res(self):
-        if self.res_msg_box.is_empty():
-            return None
-        else:
-            msg = self.res_msg_box.dequeue()
-            return msg
 
     ###### come from Response Queue
     # receieve invalidate ackowledge from other node
@@ -164,6 +149,7 @@ class LLC_Controller:
     # if there is no empty way, first set evict addr to State.I and then put addr into cache
     def add_new_line(self, addr):
         if self.cache.addNewLine(addr) == True:
+            self.cache.renewAccess(addr)
             return True
         else:
             return self.cache_evict(addr)
@@ -618,6 +604,7 @@ class LLC_Controller:
             current_state, owner = self.get_current_state(req_msg)
             if self.do_transition(current_state, req_msg, owner) == type.Success:
                 self.req_msg_box.remove(req_msg)
+                self.cache.renewAccess(req_msg.addr)
         
         ## clk_cnt ++
         self.clk_cnt = self.clk_cnt + 1

@@ -63,7 +63,7 @@ class proc_cache:
         match_way = self.searchSet(index, tag)
         ## only use updateState when the line exist in cache
         if (match_way == -1):
-            print("Error! line miss in cache during updating state")
+            print("Error! line miss in cache during updating state, addr:", addr)
             quit()
         else:
             self.words_state[index][match_way][offset] = new_state
@@ -88,6 +88,7 @@ class proc_cache:
             return False
         else:
             self.line_tag[index][empty_way] = tag
+            self.renewAccess(addr)
             return True
 
     ## Only use when making sure the address is in cache
@@ -98,7 +99,7 @@ class proc_cache:
             print("Error! line miss in cache during renew access")
             quit()
         temp_state = self.words_state[index][match_way][:]
-        for i in range(match_way-1):
+        for i in range(match_way):
             self.words_state[index][i+1] = self.words_state[index][i][:]
             self.line_tag[index][i+1] = self.line_tag[index][i]
         self.words_state[index][0] = temp_state[:]
@@ -108,4 +109,6 @@ class proc_cache:
     ## Only use when eviction is required
     def getLRU(self, addr):
         tag, index, offset = self.parseAddr(addr)
-        return self.line_tag[index][self.ways-1], self.words_state[index][self.ways-1][:]
+        LRUtag = self.line_tag[index][self.ways-1]
+        LRUaddr = LRUtag * self.total_sets * self.line_size - index * self.line_size
+        return LRUaddr, self.words_state[index][self.ways-1][:]

@@ -18,10 +18,12 @@ class State(Enum):
     VI_S = auto()
     VI_O = auto()
     I_I_V = auto() # invalid
+    I_I_S = auto() # invalid
+    I_I_O = auto() # invalid
+    I_I_VI = auto() # invalid
 
-    
-class msg_type(Enum):
-    # Snoop Req from another node
+class llc_msg_type(Enum):
+    # Snoop Req from another node ()
     ReqV = auto()
     ReqS = auto()
     ReqWT = auto()
@@ -47,17 +49,8 @@ class msg_type(Enum):
     FwdReqOdata = auto()
     FwdRvkO = auto()
     Inv = auto()
-    
-class Node(Enum):
-    LLC = auto()
-    CPU0 = auto()
-    CPU1 = auto()
-    CPU2 = auto()
-    CPU3 = auto()
-    GPU  = auto()
-    MEM = auto()
-    NULL = auto()
-    
+
+
 class Type(Enum):
     Success = auto()
     Block = auto()
