@@ -69,11 +69,11 @@ class Core:
     '''
 
     @staticmethod
-    def reuse_possible(self, t1: Trace, t2: Trace) -> bool:
+    def reuse_possible(t1: Trace, t2: Trace) -> bool:
         assert (t1.core == t2.core)
         if t1.index > t2.index:
-            return self.reuse_helper(t1, t2.index)
-        return self.reuse_helper(t2, t1.index)
+            return Core.reuse_helper(t1, t2.index)
+        return Core.reuse_helper(t2, t1.index)
 
     '''
     T2 is the larger trace index, goes from T2 to index and sees
@@ -81,7 +81,7 @@ class Core:
     address
     '''
     @staticmethod
-    def reuse_helper(self, t2: Trace, index: int) -> bool:
+    def reuse_helper(t2: Trace, index: int) -> bool:
         usedAddrs = {t2.addr}
         count = t2.index
         while count >= index + 1:
@@ -207,14 +207,17 @@ class Helper:
 
     @staticmethod
     def same_core(t1: Trace, t2: Trace) -> bool:
+        if not t1 or not t2: return False
         return t1.core == t2.core
 
     @staticmethod
     def diff_core(t1: Trace, t2: Trace) -> bool:
+        if not t1 or not t2: return False
         return t1.core != t2.core
 
     @staticmethod
     def same_inst(t1: Trace, t2: Trace) -> bool:
+        if not t1 or not t2: return False
         return t1.inst == t2.inst
 
     '''
