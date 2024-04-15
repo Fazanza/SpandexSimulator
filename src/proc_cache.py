@@ -1,20 +1,12 @@
 import math
-from enum import Enum, auto
-import random
-from collections import deque
-from gpu_header import *
-from global_utility import *
 
-
-## for GPU cache
-## 1. if evicted, no wb will be happen, just invalidate the line
-class GPU_cache:
+L1STATE = ["I", "V", "S", "O", "IV", "IS", "WTV", "WTI", "IO", "IOdata", "OI_2", "OI_1", "IOI", "IOS"]
+class proc_cache:
     cache_size = 0 # number of words in whole cache
     memory_size = 0 # number of words in whole memory
     line_size = 0 # number of words in a line
     ways = 0 # cache way associativity
     total_sets = 0 # number of sets in cache
-    line_state = []
     words_state = []
     line_tag = []
     addr_bits = 0
@@ -35,8 +27,7 @@ class GPU_cache:
         self.addr_bits = math.frexp(memory_size)[1]-1
         self.index_bits = math.frexp(self.total_sets)[1]-1
         self.tag_bits = self.addr_bits - self.index_bits - self.offset_bits
-        self.line_state = [[State.I for j in range(self.ways)] for k in range(self.total_sets)]
-        self.words_state = [[[State.I for i in range(self.line_size)] for j in range(self.ways)] for k in range(self.total_sets)]
+        self.words_state = [[["I" for i in range(self.line_size)] for j in range(self.ways)] for k in range(self.total_sets)]
         self.line_tag = [[0 for j in range(self.ways)] for k in range(self.total_sets)]
 
     ## Separate address into tag, index and offset
@@ -56,68 +47,26 @@ class GPU_cache:
         return match_way
 
     ## Read a word in the cache, will return the state of the word
-    def getState_word(self, addr):
+    def getState(self, addr):
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
         # miss
         if (match_way == -1):
-            return State.I
+            return "I"
         else:
             ##updateAccesing
             return self.words_state[index][match_way][offset]
-    
-    def getState_all_word(self, addr):
-        tag, index, offset = self.parseAddr(addr)
-        match_way = self.searchSet(index, tag)
-        # miss
-        if (match_way == -1):
-            return State.I
-        else:
-            ##updateAccesing
-            return self.words_state[index][match_way]
 
-    def getState_line(self, addr):
-        tag, index, offset = self.parseAddr(addr)
-        match_way = self.searchSet(index, tag)
-        # miss
-        if (match_way == -1):
-            return State.I
-        else:
-            ##updateAccesing
-            return self.words_state[index][match_way]
-
-     ## Only use when making sure the address is in cache
-    def updateState_word(self, addr, new_state):
+    ## Only use when making sure the address is in cache
+    def updateState(self, addr, new_state):
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
         ## only use updateState when the line exist in cache
         if (match_way == -1):
-            print("Error! line miss in cache during updating state")
+            print("Error! line miss in cache during updating state, addr:", addr)
             quit()
         else:
             self.words_state[index][match_way][offset] = new_state
-
-    def updateState_line(self, addr, new_state):
-        tag, index, offset = self.parseAddr(addr)
-        match_way = self.searchSet(index, tag)
-        ## only use updateState when the line exist in cache
-        if (match_way == -1):
-            print("Error! line miss in cache during updating state")
-            quit()
-        else:
-            self.line_state[index][match_way] = new_state
-
-    def updateState_line_word(self, addr, new_state):
-        tag, index, offset = self.parseAddr(addr)
-        match_way = self.searchSet(index, tag)
-        ## only use updateState when the line exist in cache
-        if (match_way == -1):
-            print("Error! line miss in cache during updating state")
-            quit()
-        else:
-            self.line_state[index][match_way] = new_state
-            for i in range(len(self.words_state[index][match_way])):
-                self.words_state[index][match_way][i] = new_state
 
     ## Adding new address line into cache but need to modified state later
     def addNewLine(self, addr):
@@ -129,7 +78,7 @@ class GPU_cache:
         for i in range(self.ways):
             line_occupied = False
             for j in range(self.line_size):
-                if(self.words_state[index][i][j] != State.I):
+                if(self.words_state[index][i][j] != "I"):
                     line_occupied = True
                     break
             if not line_occupied:
@@ -149,14 +98,11 @@ class GPU_cache:
         if(match_way == -1):
             print("Error! line miss in cache during renew access")
             quit()
-        temp_word_state = self.words_state[index][match_way][:]
-        temp_line_state = self.line_state[index][match_way]
+        temp_state = self.words_state[index][match_way][:]
         for i in range(match_way):
-            self.line_state[index][i+1] = self.line_state[index][i]
             self.words_state[index][i+1] = self.words_state[index][i][:]
             self.line_tag[index][i+1] = self.line_tag[index][i]
-        self.line_state[index][0] = temp_line_state
-        self.words_state[index][0] = temp_word_state[:]
+        self.words_state[index][0] = temp_state[:]
         self.line_tag[index][0] = tag
 
     ## Return LRU tag and state
@@ -165,8 +111,4 @@ class GPU_cache:
         tag, index, offset = self.parseAddr(addr)
         LRUtag = self.line_tag[index][self.ways-1]
         LRUaddr = LRUtag * self.total_sets * self.line_size - index * self.line_size
-        return LRUaddr, self.line_state[index][self.ways-1], self.words_state[index][self.ways-1][:]
-    
-    def clear(self):
-        self.line_state = [[State.I for j in range(self.ways)] for k in range(self.total_sets)]
-        self.words_state = [[[State.I for i in range(self.line_size)] for j in range(self.ways)] for k in range(self.total_sets)]
+        return LRUaddr, self.words_state[index][self.ways-1][:]

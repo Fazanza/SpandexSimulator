@@ -10,21 +10,19 @@ class State(Enum):
 class Inst_type(Enum):
     Load = auto()
     Store = auto()
-    Sync = auto()
+    Barrier = auto()
 
 class Inst():
-    def __init__(self, inst_type, addr, sync_cnt):
+    def __init__(self, inst_type, addr, barrier_name):
         self.inst_type = inst_type
         self.addr = addr
-        self.sync_cnt = sync_cnt
+        self.barrier_name = barrier_name # name for barrier
 
 class gpu_msg_type(Enum):
     # req send to LLC
     ReqV = auto()
     ReqWT = auto()
+    # rep from 
     RepV = auto()
     RepWT = auto()
     
-class Type(Enum):
-    Success = auto()
-    Block = auto()

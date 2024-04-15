@@ -1,36 +1,10 @@
-from enum import Enum
 from typing import Optional
 
-from main import traces
-
-
-class Inst(Enum):
-    load = 1
-    store = 2
-
-
-class ProcType(Enum):
-    CPU = 1
-    GPU = 2
-
-
-class Trace:
-    def __init__(
-            self,
-            _inst: Inst,
-            _proctype: ProcType,
-            _value: int,
-            _addr: int,
-            _core: int,
-            _index: int,
-    ):
-        self.inst = _inst
-        self.proctype = _proctype
-        self.value = _value
-        self.addr = _addr
-        self.core = _core
-        self.index = _index
-
+from globals import BLOCK_SIZE
+from globals import traces
+from globals import Inst
+from globals import ProcType
+from globals import Trace
 
 class Helper:
     @staticmethod
@@ -51,14 +25,17 @@ class Helper:
 
     @staticmethod
     def same_core(t1: Trace, t2: Trace) -> bool:
+        if not t1 or not t2: return False
         return t1.core == t2.core
 
     @staticmethod
     def diff_core(t1: Trace, t2: Trace) -> bool:
+        if not t1 or not t2: return False
         return t1.core != t2.core
 
     @staticmethod
     def same_inst(t1: Trace, t2: Trace) -> bool:
+        if not t1 or not t2: return False
         return t1.inst == t2.inst
 
     '''
@@ -79,6 +56,13 @@ class Helper:
     '''
     @staticmethod
     def next_block_conflict(t1: Trace) -> Optional[Trace]:
+        curIndex: int = t1.index
+        while curIndex < len(traces) - 1:
+            curIndex = curIndex + 1
+            if traces[curIndex].core != t1.core:
+                continue
+            if traces[curIndex].addr % BLOCK_SIZE == 0:
+                return traces[curIndex]
         return None
 
     '''
@@ -100,6 +84,7 @@ class Helper:
         while curIndex >= 0:
             if t1.addr == traces[curIndex].addr:
                 return traces[curIndex]
+            curIndex = curIndex - 1
         return None
 
     '''
@@ -111,6 +96,15 @@ class Helper:
     '''
     @staticmethod
     def sync_possible(t1: Trace, t2: Trace) -> bool:
+        if t1.core != t2.core:
+            return False
+
+        if t1.inst == Inst.load and t2.inst == Inst.acquire:
+            return True
+
+        if t1.inst == Inst.store and t2.inst == Inst.release:
+            return True
+
         return False
 
     '''
@@ -119,10 +113,11 @@ class Helper:
     @staticmethod
     def criticality(t1: Trace) -> int:
         if t1.inst != Inst.load:
-            return 2
+            return 1
 
         if t1.proctype == ProcType.CPU:
             return 6
+
         if t1.proctype == ProcType.GPU:
             return 2
 
