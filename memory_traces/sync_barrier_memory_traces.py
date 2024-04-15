@@ -40,8 +40,8 @@ for cpu in range(cpu_core):
     sampled_barrier.sort()
     barrier_partition[cpu] = sampled_barrier
 
-# print(barrier_partition)
-# print(barrier_num_waiter)
+print(barrier_partition)
+print(f"value num: {barrier_num_waiter}")
 for value in barrier_num_waiter:
     if (value < 2) or (value > (cpu_core + gpu_core)):
         raise Exception("Barrier Allocation Incorrect")
@@ -53,17 +53,17 @@ for barrier_no in range(total_barriers):
     index_start = barrier_no*partition_range
     index_end = (barrier_no+1)*partition_range-1 if (barrier_no < total_barriers-1) else (array_length-1)
 
-    mode = "w" if iter == 0 else "a"
+    mode = "w" if barrier_no == 0 else "a"
 
     with open("gpu_0.txt", mode) as fh:
         for access in range(num_access_gpu):
             address = random.randint(index_start, index_end)
             mem = random.choice(mem_type)
-            stored_value = random.randint(1,100)
+            # stored_value = random.randint(1,100)
             if mem == "ld":
                 fh.write(f"{mem} {address}\n")
             else:
-                fh.write(f"{mem} {address} {stored_value}\n")
+                fh.write(f"{mem} {address}\n")
         fh.write(f"Barrier {barrier_no} {barrier_num_waiter[barrier_no]}\n")
 
 
