@@ -105,4 +105,4 @@ for cpu_id in range(cpu_core):
                     fh.write(f"{mem} {address}\n")
                 else:
                     fh.write(f"{mem} {address}\n")
-            fh.write(f"Barrier {current_barrier} {barrier_num_waiter[barrier_no]}\n")
+            fh.write(f"Barrier {current_barrier} {barrier_num_waiter[current_barrier]}\n")
