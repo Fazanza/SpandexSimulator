@@ -77,12 +77,12 @@ class GPU_Controller:
         ###########################
         if current_state == State.I:
             ###
-            if input_msg.msg_type == msg.type.Load:
-                self.generated_msg = msg(msg_type.ReqV, msg_addr, Node.GPU, Node.LLC, 0, Node.NULL)
+            if input_msg.msg_type == msg_type.Load:
+                self.generated_msg = Msg(msg_type.ReqV, msg_addr, Node.GPU, Node.LLC, 0, Node.NULL)
                 self.cache.updateState_line_word(msg_addr, State.IV)
             ###
             elif input_msg.msg_type == msg_type.Store:
-                self.generated_msg = msg(msg_type.ReqWT, msg_addr, Node.GPU, Node.LLC, 0, Node.NULL)
+                self.generated_msg = Msg(msg_type.ReqWT, msg_addr, Node.GPU, Node.LLC, 0, Node.NULL)
                 self.cache.updateState_word(msg_addr, State.WTV)
                 self.cache.updateState_line(msg_addr, State.WTV)
             ###
@@ -92,11 +92,11 @@ class GPU_Controller:
         ###########################
         elif current_state == State.V:
             ###
-            if input_msg.msg_type == msg.type.Load:
+            if input_msg.msg_type == msg_type.Load:
                return type.Success
             ###
             elif input_msg.msg_type == msg_type.Store:
-                self.generated_msg = msg(msg_type.ReqWT, msg_addr, Node.GPU, Node.LLC, 0, Node.NULL)
+                self.generated_msg = Msg(msg_type.ReqWT, msg_addr, Node.GPU, Node.LLC, 0, Node.NULL)
                 self.cache.updateState_word(msg_addr, State.WTV)
                 self.cache.updateState_line(msg_addr, State.WTV)
             ###
@@ -123,12 +123,12 @@ class GPU_Controller:
             ###
             if input_msg.msg_type == msg_type.Load:
                 self.cache.updateState_line_word(msg_addr, State.IV)
-                self.generated_msg = msg(msg_type.ReqV, msg_addr, Node.GPU, Node.LLC, 0, Node.NULL)
+                self.generated_msg = Msg(msg_type.ReqV, msg_addr, Node.GPU, Node.LLC, 0, Node.NULL)
             ###
             elif input_msg.msg_type == msg_type.Store:
                 self.cache.updateState_line(msg_addr, State.WTV)
                 self.cache.updateState_word(msg_addr, State.WTV)
-                self.generated_msg = msg(msg_type.ReqWT, msg_addr, Node.GPU, Node.LLC, 0, Node.NULL)
+                self.generated_msg = Msg(msg_type.ReqWT, msg_addr, Node.GPU, Node.LLC, 0, Node.NULL)
             ###
             else:
                 return type.Error
@@ -160,7 +160,7 @@ class GPU_Controller:
     # for getting response from LLC
     def receieve_rep_msg(self, msg_type, addr, src, dst, ack_cnt, fwd_dst):
         assert src == Node.LLC, "Error! GPU is getting response outside LLC"
-        msg(msg_type, addr, src, dst, ack_cnt, fwd_dst)
+        msg = Msg(msg_type, addr, src, dst, ack_cnt, fwd_dst)
         self.rep_msg_box.enqueue(msg)
         
     # receiece barrier info from top, call one time if One Node send a barrier before GPU execution in the same cycle
@@ -197,12 +197,12 @@ class GPU_Controller:
         self.current_inst = inst
         if inst.inst_type == Inst_type.Load:
             if self.is_inst_qualified(inst.addr) == True:
-                inst_msg = msg(msg_type.Load, inst.addr, Node.GPU, Node.GPU, 0, Node.NULL)
+                inst_msg = Msg(msg_type.Load, inst.addr, Node.GPU, Node.GPU, 0, Node.NULL)
                 current_state = self.get_current_state(inst_msg)
                 assert self.do_transition(current_state, inst_msg) == type.Success, "Error! GPU wrong when execute Load instruction"
         elif inst.inst_type == Inst_type.Store:
             if self.is_inst_qualified(inst.addr) == True:
-                inst_msg = msg(msg_type.Store, inst.addr, Node.GPU, Node.GPU, 0, Node.NULL)
+                inst_msg = Msg(msg_type.Store, inst.addr, Node.GPU, Node.GPU, 0, Node.NULL)
                 current_state = self.get_current_state(inst_msg)
                 assert self.do_transition(current_state, inst_msg) == type.Success, "Error! GPU wrong when execute Store instruction"
         elif inst.inst_type == Inst_type.Barrier:

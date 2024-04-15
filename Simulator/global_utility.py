@@ -1,14 +1,16 @@
 from enum import Enum, auto
 
+
 class Node(Enum):
     LLC = auto()
     CPU0 = auto()
     CPU1 = auto()
     CPU2 = auto()
     CPU3 = auto()
-    GPU  = auto()
+    GPU = auto()
     MEM = auto()
     NULL = auto()
+
 
 class msg_type(Enum):
     # Snoop Req from another node ()
@@ -18,12 +20,12 @@ class msg_type(Enum):
     ReqOdata = auto()
     ReqWB = auto()
     ## ReqWTdata = auto()
-    
+
     # Snoop response from another node
     InvAck = auto()
     RepRvkO = auto()
     MemRep = auto()
-    
+
     # Req send from LLC
     MemReq = auto()
     RepS = auto()
@@ -37,25 +39,28 @@ class msg_type(Enum):
     FwdReqOdata = auto()
     FwdRvkO = auto()
     Inv = auto()
-    
+
     # Req generated from Node Instruction
     Load = auto()
     Store = auto()
     Barrier = auto()
+
 
 class type(Enum):
     Success = auto()
     Block = auto()
     Error = auto()
 
-class msg:
+
+class Msg:
     def __init__(self, msg_type, addr, src, dst, ack_cnt, fwd_dst):
-        self.msg_type   = msg_type
-        self.addr       = addr
-        self.src        = src
-        self.dst        = dst
-        self.fwd_dst    = fwd_dst
-        self.ack_cnt    = ack_cnt
+        self.msg_type = msg_type
+        self.addr = addr
+        self.src = src
+        self.dst = dst
+        self.fwd_dst = fwd_dst
+        self.ack_cnt = ack_cnt
+
 
 class Queue:
     def __init__(self):
@@ -90,7 +95,8 @@ class Queue:
     def clear(self):
         """Remove all items from the queue."""
         self.items = []
-        
+
+
 class Map:
     def __init__(self):
         self.map = {}
@@ -101,7 +107,6 @@ class Map:
             return False
         self.map[key] = value
         return True
-
 
     def search(self, key):
         if key in self.map:

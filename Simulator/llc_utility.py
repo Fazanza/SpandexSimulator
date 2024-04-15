@@ -8,7 +8,7 @@ from global_utility import *
 
 class req_msg:
     def __init__(self, msg_type, addr, src, dst, ack_cnt, fwd_dst, time_stamp):
-        self.msg = msg(msg_type, addr, src, dst, ack_cnt, fwd_dst)
+        self.msg = Msg(msg_type, addr, src, dst, ack_cnt, fwd_dst)
         self.time_stamp = time_stamp
 
 class MessageBuffer:
