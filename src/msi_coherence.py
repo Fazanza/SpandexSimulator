@@ -1,8 +1,10 @@
 from enum import Enum, auto
 import random
 from collections import deque
+from clock import Clock
+import time
 
-
+from proc_cache import proc_cache
 
 # Define Cache States
 class State(Enum):
@@ -22,6 +24,7 @@ class State(Enum):
     MI_A = auto()
     SI_A = auto()
     II_A = auto()
+
 
 class Event(Enum):
     # From the processor (memory trace queue)
@@ -48,177 +51,222 @@ class Event(Enum):
     # Triggered after the last ack is received
     LastInvAck = auto()
 
-# triggered by incoming messages
-# msg_type
-class msg_type(Enum):
-#class Event(Enum)
-    Load = auto()
-    Store = auto()
 
-    Inv = auto()
-    
-    Data = auto()
-    EData = auto()
-    
-    Ack = auto()
-
-class Event(Enum):
-    Load = auto()
-    Store = auto()
-
-    Inv = auto()
-
-    Data = auto()
-    EData = auto()
-
-    Ack = auto()
-
-# Types of Request Messages
-class requestType(Enum):
-    # Requests from the cache for coherence
-    GetS = auto()
-    GetM = auto()
-    PutS = auto()
-    PutM = auto()
-    
-    # Requests from the directory to the caches on the fwd network
-    Inv = auto()
-    PutAck = auto() # The put request has been processed
 
 class DeviceType(Enum):
     Directory = auto()
     Cache = auto()
 
-# Types of Response Messages
-class responseType(Enum):
+# class Device(deviceType):
+#     def __init__():
+#         self.deviceID = 0
+#         self.deviceType = deviceType #cache or directory
+#     def getID():
+#         if deviceType is DeviceType.Directory:
+#             return 0
+#         else:
+#             self.deviceID += 1
+#             return self.deviceID
+
+
+class MessageType(Enum):
+    GetS = auto()
+    GetM = auto()
+    PutS = auto()
+    PutM = auto()
+    Inv = auto()
+    PutAck = auto()
     Data = auto()
-    InvAck = auto() #from another cache
+    InvAck = auto() 
+    LD = auto()
+    ST = auto()
 
-# Request Message Packet Struct
-class requestMsg():
-    def __init__(self, addr, request_type, src, dest, data_block):
+
+
+# # Memory Operation from Memory Trace
+# class 
+
+class Message():
+    def __init__(self, mtype, addr, src, dest, data_block, ackCnt=0):
+        self.mtype = mtype
         self.addr = addr
-        self.requestType = request_type
-        self.src = src # Node that initiated the request
-        self.dest = dest # destination node
-        self.dataBlock = data_block
-
-
-# Cache->Dir Messages or Fwd Messages
-class ResponseMsg():
-    def __init__(self, addr, response_type, src, dest, data_block, ackCnt):
-        self.addr = addr
-        self.responseType = response_type
-        self.src = src # Node that initiated the request
-        self.dest = dest # destination node
+        self.src = src
+        self.dest = dest
         self.dataBlock = data_block
         self.ackCnt = ackCnt
+        
+    def __str__(self):
+        return (f"Message Type: {self.mtype}, "
+                f"Address: {self.addr}, "
+                f"Source: {self.src}, "
+                f"Destination: {self.dest}, "
+                f"Data Block: {self.dataBlock}, "
+                f"Ack Count: {self.ackCnt}")
+
 
 # Virtual Channel
 # Message Buffer
 class VirtualChannel:
     def __init__(self):
         self.messages = deque()
+        #self.clock = clock
+
+    def __str__(self):
+        return self.content
 
     def is_ready(self):
         # return bool(self.queue)
         return bool(self.messages)
+        # return self.clock.currentTick() >= self.clock.clockEdge()
 
 
-    def send_message(self, message):
+    def send_message(self, message): #enque
         self.messages.append(message)
 
-    def receive_message(self):
+    #def receive_message(self):
+    def dequeue(self):    
         return self.messages.popleft() if self.messages else None
 
     def is_empty(self):
         return len(self.messages) == 0
 
-    def peek(self):
+    def peek(self): #check the head point value of queue
         return self.messages[0] if self.messages else None
-        # return self.queue[0] if self.queue else None
     
     def print_all_messages(self):
-        while not self.is_empty():
-            print(self.receive_message())
+        if self.is_empty():
+            print("VC is empty")
+        print("==========================")    
+        for msg in self.messages:
+            print("VC CONTENTS")
+            print(msg)  # This will invoke __str__ method of Message object
+        print("==========================")
 
-
-# transient request buffer entry
-class trb:
-    def __init__(self):
-        self.state = State.I #state of cache line
-        self.data_block = None #data for cache line
-        self.acks_outstanding = 0 #numer of acks left to receive
+# transaction buffer entry
+class tbe:
+    def __init__(self, state, data_block, acks_outstanding):
+        self.state = state #state of cache line
+        self.data_block = data_block #data for cache line MIA
+        self.acks_outstanding = acks_outstanding #numer of acks left to receive
 
     def __repr__(self):
         return (f"tr : State={self.state}, DataBlock={self.data_block}, "
                 f"AcksOutstanding={self.acks_outstanding}")
 
 # transient request buffer
-class trbTable:
+# transaction buffer
+class tbeTable:
     def __init__(self):
         self.entries = {}
 
     def lookup(self, addr):
-        ## Return the trb entry for the given address if it exists
         return self.entries.get(addr, None)
 
     def allocate(self, addr):
-        # Allocate a new trb entry for the given address. 
+        # Allocate a new tbe entry for the given address. 
         if addr not in self.entries:
-            self.entries[addr] = trb()
+            self.entries[addr] = tbe()
         return self.entries[addr]
 
     def deallocate(self, addr):
-        # Remove the trb associated with the given address 
+        # Remove the tbe associated with the given address 
         if addr in self.entries:
             del self.entries[addr]
 
     def is_present(self, addr):
-        # Check if there's a trb allocated for the given address
+        # Check if there's a tbe allocated for the given address
         return addr in self.entries
+
+class TBETable:
+    def __init__(self, number_of_TBEs):
+        self.m_number_of_TBEs = number_of_TBEs
+        self.m_map = HashMap()
+
+    def isPresent(self, address):
+        assert address == self.line_address(address)
+        assert len(self.m_map) <= self.m_number_of_TBEs
+        return address in self.m_map
+
+    def allocate(self, address):
+        assert not self.isPresent(address)
+        assert len(self.m_map) < self.m_number_of_TBEs
+        self.m_map[address] = ENTRY()
+
+    def deallocate(self, address):
+        assert self.isPresent(address)
+        assert len(self.m_map) > 0
+        del self.m_map[address]
+
+    def areNSlotsAvailable(self, n):
+        return (self.m_number_of_TBEs - len(self.m_map)) >= n
+
+    def lookup(self, address):
+        if address in self.m_map:
+            return self.m_map[address]
+        return None
+
+    def print(self, out):
+        pass
 
 ## below is configruable
 ## same as cache.py
 class CacheEntry:
-    def __init__(self, address, state='I', valid=False, dirty=False, data_block=None):
-        self.address = address
-        self.state = state  # 'I' for Invalid, 'M' for Modified, 'S' for Shared, 'E' for Exclusive
-        self.valid = valid
-        self.dirty = dirty
-        self.data_block = data_block
+    def __init__(self, address, state='I', isValid=False, isDirty=False, data_block=None):
+        # cache line metadata
+        self.address = address & ~0x3F  # base address for the cache line --> Mask out the lower 6 bits for 64-byte alignment. given as hex value ex) 0x211
+        self.state = state  # Cache line state for coherency
+        self.isValid = isValid
+        #self.isDirty = isDirty
+        self.data_block = data_block if data_block else [None] * 16  
+        #data_block --> [byte1.. byte16] # list of 16byes (currently fixed to 64 bytes per line size but can be configurable)
+        self.LRU = 0 # will update later
+        # self.accesslvl # read-only? write-only?
+
+        # word granularity
+        # flag
 
     def __str__(self):
-        return f"Addr: {self.address}, State: {self.state}, Valid: {self.valid}, Dirty: {self.dirty}"
+        return f"Addr: {hex(self.address)}, State: {self.state}, isValid: {self.isValid}, isDirty: {self.isDirty}"
 
 
-
-class Cache:
+class Cache: #currently assumes fully-associative
     def __init__(self, size):
         # collection of cache entry
-        self.entries = {i: CacheEntry(i) for i in range(size)}
+        # dictionary with key: ADDR / value : CacheEntry
+        self.entries = {i: CacheEntry(i) for i in range(size)} #preallocate
+        #self.entries = {} # unlimited capacity
+        self.current_max_LRU = 0  # Track the highest LRU value
 
     def get_entry(self, address):
-        return self.entries.get(address)
+        base_address = address & ~0x3F
+        return self.entries.get(base_address)
 
-    def set_entry(self, address, state, valid, dirty, data_block):
-        if address in self.entries:
-            entry = self.entries[address]
+    def set_entry(self, address, state, isValid, isDirty, data_block):
+        base_address = address & ~0x3F
+        if base_address in self.entries:
+            entry = self.entries[base_address]
             entry.state = state
-            entry.valid = valid
-            entry.dirty = dirty
+            entry.isValid = isValid
+            entry.isDirty = isDirty
             entry.data_block = data_block
+            self.setMRU(entry)
         else:
-            self.entries[address] = CacheEntry(address, state, valid, dirty, data_block)
+            self.entries[base_address] = CacheEntry(base_address, state, isValid, isDirty, data_block)
 
     def invalidate(self, address):
-        if address in self.entries:
-            self.entries[address].state = 'I'
-            self.entries[address].valid = False
-            print(f"Invalidated Cache Line: {self.entries[address]}")
+        base_address = address & ~0x3F
+        if base_address in self.entries:
+            self.entries[base_address].state = 'I'
+            self.entries[base_address].isValid = False
+            print(f"Invalidated Cache Line: {self.entries[base_address]}")
 
     # checks if cache allocation is available for the given address
-    # def is_cache_available(self, address):        
+    # def is_cache_available(self, address):
+
+    def setMRU(self, cache_entry):
+        self.current_max_LRU += 1
+        cache_entry.LRU = self.current_max_LRU  # Update the LRU to the highest current value, marking it most recently used
+
 
     def print_contents(self):
         # Print each entry's details
@@ -233,271 +281,427 @@ class MemRequest:
         self.line_address = line_address
         self.request_type = request_type  # 'Load', 'Store' 
 
-class MandatoryQueue:
-    def __init__(self):
-        self.queue = []
 
-    def is_ready(self):
-        return len(self.queue) > 0
-
-    def enqueue(self, request):
-        self.queue.append(request)
-
-    def peek(self):
-        return self.queue[0] if self.queue else None
-
-    def dequeue(self):
-        return self.queue.pop(0) if self.queue else None
-
-## cache controller model 
-## --> this is the part that takes care of state transition and event handling
-
+## Cache Controller Model 
+## --> Handles Coherence Protocol
 class CacheController:
-    def __init__(self, cache):
+    dirID = 0 #device.getDirID()
+    def __init__(self, cache, clock, deviceID=1): 
+        self.clock = clock
         self.cache = cache
-        self.trbs = trbTable()
+        self.deviceID = deviceID 
+        self.tbes = tbeTable()
         self.channels = {
-            'response_in': VirtualChannel(),
-            'forward_in': VirtualChannel(),
-            'mandatory_in': VirtualChannel()
+            'response_in'   : VirtualChannel(),
+            'forward_in'    : VirtualChannel(),
+            'mandatory_in'  : VirtualChannel(),
+            'response_out'  : VirtualChannel(),
+            'request_out'   : VirtualChannel()
         }
         self.data_block = None
         self.acks_outstanding = 0
         self.capacity = 10
+        
+        
+        self.last_checked_tick = self.clock.currentTick()
+        self.clock.register_observer(self)
+        # self.clock.register_callback(self.on_tick_update) 
+        self.clock.callback = self.on_tick_update  # Setting the callback
 
+        # self.handle_responses()
+        # self.handle_forwards()
+        # self.handle_mandatory()
+
+    def on_tick_update(self, new_tick):
+        # Handle the tick update here
+        print(f"Tick changed detected in CacheController: {new_tick}")
+
+    def update(self, tick):
+        print(f"CacheController notified of tick update to: {tick}")    
+
+    def monitor_tick(self):
+        while True:
+            current_tick = self.clock.currentTick()
+            if current_tick != self.last_checked_tick:
+                print(f"Tick has changed to: {current_tick}")
+                self.last_checked_tick = current_tick
+            time.sleep(0.1)  # sleep for a short time before checking again
+
+
+
+## MESSAGE HANDLE
+## need to enque based on messagetype
+    # dequeue from message buffer (at every tick) and trigger events
+    def handle_responses(self):
+        channel = self.channels['response_in']
+        #while channel.is_ready(clock()):
+        msg = channel.peek()
+        entry = self.cache.get_entry(msg.addr)
+        tbe = self.tbes.entries[msg.addr]
+        # tbe = self.tbes.lookup(msg.addr)
+        # assert tbe is not None, "tbe must exist for this address"
+
+        # if response sender is directory
+        # if msg.src is DeviceType.Directory:
+        if msg.src is self.DirID
+            if msg.mtype is not MessageType.Data:
+                raise ValueError("Directory should only reply with data")
+            # if cache receives 'ack' from other caches before getting response from directory
+            if msg.acks + tbe.AckOutstanding is 0:
+                self.trigger(Event.DataDirNoAcks, msg.addr, entry)
+            else:
+                self.trigger(Event.DataDirAcks, msg.addr, entry)
+        
+        # if sender is another cache
+        else:
+            if msg.mtype is responseType.Data:
+                self.trigger(Event.DataOwner, msg.addr, entry)
+            elif msg.mtype is responseType.InvAck:
+                print(f"Got inv ack. {tbe.acks_outstanding} left")
+                if tbe.acks_outstanding is 1:
+                    self.trigger(Event.LastInvAck, msg.addr, entry)
+                else:
+                    self.trigger(Event.InvAck, msg.addr, entry)
+        # if no messages to process, go to next message queue to process
+        self.handle_forwards()
+
+    def handle_forwards(self):
+        channel = self.channels['forward_in']
+        #while channel.is_ready():
+        msg = channel.peek()
+        entry = self.cache.get_entry(msg.addr)
+        tbe = self.tbes.entries[msg.addr]
+
+        if msg.mtype is MessageType.GetS:
+            self.trigger(Event.FwdGetS, msg.addr, entry)
+        elif msg.mtype is MessageType.GetM:
+            self.trigger(Event.FwdGetM, msg.addr, entry)
+        elif msg.mtype is MessageType.Inv:
+            self.trigger(Event.Inv, msg.addr, entry)
+        elif msg.mtype is MessageType.PutAck:
+            self.trigger(Event.PutAck, msg.addr, entry)            
+        else:
+            raise ValueError("Unexpected forward message type.")
+        # if no messages to process, go to next message queue to process
+        self.handle_mandatory()
+
+    def handle_mandatory(self):
+        channel = self.channels['mandatory_in']
+        # while channel.is_ready(): # at each clockEdge(), check for a new message
+        msg = channel.peek() # receive should account cache access latency
+        entry = self.cache.get_entry(msg.addr)
+        #tbe = self.tbes.entries[msg.addr]
+
+        if not entry.isValid and not self.cache.is_cache_available(msg.addr):
+        # if entry.state is State.I and not self.cache.is_cache_available(msg.addr):
+            # get replacement address from cache
+            # replacement_addr = self.probe_cache(msg.addr)
+            replacement_entry = self.cache_entries[replacement_addr]
+            self.trigger(Event.Replacement, replacement_addr, replacement_entry)
+        else: # if entry is valid
+            if msg.mtype is MessageType.LD:
+                self.trigger(Event.Load, msg.addr, entry)
+            elif msg.mtype is MessageType.ST:
+                self.trigger(Event.Store, msg.addr, entry)
+            else:
+                raise ValueError("Unexpected request type from processor")   
+    
+## EVENT TRIGGER    
     # trigger will cause state transition and will result in action
     # --> queue the output message
     # call do_trasition here
     def trigger(self, event, addr, cache_entry):
         # Event handling logic to be implemented
         print(f"Triggered {event.name} for address {addr}")
-        if event == Event.DataDirNoAcks:
+        if event is Event.DataDirNoAcks:
             print(f"DataDirNoAcks for address {addr}")
-        elif event == Event.DataDirAcks:
+            self.doTransition(event, cache_entry )
+        elif event is Event.DataDirAcks:
             print(f"DataDirAcks for address {addr}")
-        elif event == Event.DataOwner:
+        elif event is Event.DataOwner:
             print(f"DataOwner for address {addr}")
-        elif event == Event.InvAck:
+        elif event is Event.InvAck:
             print(f"InvAck for address {addr}")
-        elif event == Event.LastInvAck:
+        elif event is Event.LastInvAck:
             print(f"LastInvAck for address {addr}")
-
-    # ACTIONS
-    ## below are called during do_transition
-    def allocateCacheBlock():
-        self.cache.allocateBlock
+        elif event is Event.Load:
+            print(f"Load for address {addr}")
+            self.doTransition(event, cache_entry)
+        elif event is Event.Store:    
+            print(f"Store for address {addr}")
     
+## ACTIONS
+    ## below are called during do_transition
+
+    def deallocateTBE(self, addr):
+        self.tbes.deallocate(addr)
+        print("TBE deallocated.")
+
+    def allocateTBE(self, addr):
+        self.tbes.allocate(addr)
+        print("TBE allocated for transition.")
+
+    # responses to CPU requests
+    def loadHit(cache_entry):
+        # assert(cache_entry.isValid)
+        cache.setMRU(cache_entry)
+        # send the data back to CPU
+        print("Store hit processed.")
+
+    def storeHit(self):
+        cache.setMRU(cache_entry)
+        # send the data back to CPU
+        print("Store hit processed.")
+
+    # Send request
     def sendGetS():
-        msg_buffer.enqueue()
-            # addr
-            # msg_type
-            # requestor
-            # destination
+        out_msg = Message(mtype = MessageType.GetS, addr = addr, src = self.deviceID, dest = self.DirID)
+        self.channels["request_out"].enqueue(out_msg)
+        print("GetS message sent to fetch exclusive access.")
     def sendGetM():
-        msg_buffer.enqueue(msg)
+        out_msg = Message(mtype = MessageType.GetM, addr = addr, src = self.deviceID, dest = self.DirID)
+        self.channels["request_out"].enqueue(out_msg)
+        print("GetM message sent to fetch exclusive access.")
+    def sendPutS():
+        out_msg = Message(mtype = MessageType.PutS, addr = addr, src = self.deviceID, dest = self.DirID)
+        self.channels["request_out"].enqueue(out_msg)
+        print("PutS message sent for downgrading the block state.")
+    def sendPutM(self):
+        out_msg = Message(mtype = MessageType.PutM, addr = addr, src = self.deviceID, dest = self.DirID)
+        self.channels["request_out"].enqueue(out_msg)
+        print("PutM message sent to evict block from modified state.")
 
-################
-    # def process_messages(self):
-    #     for channel in self.channels:
-    #         while not channel.is_empty():
-    #             message = channel.receive_message()
-    #             self.handle_message(message)
+    # Cache
+    def allocateCacheBlock():
+        self.cache.set_entry()     
+    
+    def writeDataToCache(self, message):
+        self.data_block = message.data_block
+        print("Data written to cache block.")
 
-    # def handle_message(self, message):
-    #     if message.address not in self.cache:
-    #         self.cache[message.address] = CacheEntry(state=State.NP)
+    def sendCacheDataToReq(self):
+        out_msg = Message(mtype = MessageType.Data, addr = msg.addr, src=self.deviceID, dest = msg.src, data_block=cache_entry.data_block)
+        self.channels["response_out"].enqueue(out_msg)        
+        print("Cache data sent to requestor.")
 
-    #     entry = self.cache[message.address]
-    #     print(f"Handling message for {message.address}: Current State={entry.state}, Type={message.mtype}")
+    def sendCacheDataToDir(self, message):
+        out_msg = Message(mtype = MessageType.Data, addr = message.addr, src=self.deviceID, dest = self.DirID, data_block=cache_entry.data_block)
+        self.channels["response_out"].enqueue(out_msg)
+        print("Cache data sent to directory.")
 
-    #     if message.mtype in [Event.Load, Event.Store, Event.Ifetch]:
-    #         self.do_transition(entry, message.mtype)
+    def sendInvAcktoReq(self):
+        out_msg = Message(mtype = MessageType.InvAck, addr = msg.addr, src=self.deviceID, dest = msg.src, data_block=cache_entry.data_block)
+        self.channels["response_out"].enqueue(out_msg)
+        print("Invalidation Ack sent to requestor.")
 
-    def handle_responses(self):
-        channel = self.channels['response_in']
-        while channel.is_ready():
-            msg = channel.receive_message()
-            entry = self.cache.get_entry[msg.addr]
-            trb = self.trbs[msg.addr]
-            # trb = self.trbs.lookup(msg.addr)
-            # assert trb is not None, "trb must exist for this address"
+    def forwardEviction(self):
+        print("Eviction forwarded to appropriate handler.")
 
-            # if response sender is directory
-            if msg.sender == DeviceType.Directory:
-                if msg.type != responseType.Data:
-                    raise ValueError("Directory should only reply with data")
-                # if cache receives 'ack' from other caches before getting response from directory
-                if msg.acks + trb.AckOutstanding == 0:
-                    self.trigger(Event.DataDirNoAcks, msg.addr, entry)
-                else:
-                    self.trigger(Event.DataDirAcks, msg.addr, entry)
-            
-            # if sender is another cache
-            else:
-                if msg.type == responseType.Data:
-                    self.trigger(Event.DataOwner, msg.addr, entry)
-                elif msg.type == responseType.InvAck:
-                    print(f"Got inv ack. {trb.AcksOutstanding} left")
-                    if trb.AcksOutstanding == 1:
-                        self.trigger(Event.LastInvAck, msg.addr, entry)
-                    else:
-                        self.trigger(Event.InvAck, msg.addr, entry)
-            # if no messages to process, go to next message queue to process
-            self.handle_forwards()
+    def deallocateCacheBlock(self):
+        self.cache.invalidate(addr)
+        print("Cache block deallocated.")
 
-    def handle_forwards(self):
-        channel = self.channels['forward_in']
-        while channel.is_ready():
-            msg = channel.receive()
-            entry = self.cache.get_entry[msg.addr]
-            trb = self.trbs[msg.addr]
-            event_map = {
-                requestType.GetS: Event.FwdGetS,
-                requestType.GetM: Event.FwdGetM,
-                requestType.Inv: Event.Inv,
-                requestType.PutAck: Event.PutAck
-            }
-            event = event.get(msg.type, None)
-            if event:
-                self.trigger(event, msg.addr, entry)
-            else:
-                raise ValueError("Unexpected forward message type.")
-            # if no messages to process, go to next message queue to process
-            self.handle_mandatory()
+    def decrAcks(self,addr):
+        # self.acks_outstanding -= 1
+        self.tbes[addr].acks_outstanding -= 1
+        print(f"Acks outstanding decremented, now {self.acks_outstanding}.")
 
-    def handle_mandatory(self):
-        channel = self.channels['mandatory_in']
-        while channel.is_ready():
-            msg = channel.receive()
-            entry = self.cache.get_entry[msg.addr]
-            trb = self.trbs[msg.addr]
+    def storeAcks(self,message,addr):
+        # assert self.tbes.is_valid(addr)
+        self.tbes[addr].acks_outstanding += message.ackCnt
+        print("Store acknowledgements processed.")
 
-            if not entry and not self.cache.is_cache_available(msg.addr):
-                replacement_addr = self.probe_cache(msg.addr)
-                replacement_entry = self.cache_entries[replacement_addr]
-                self.trigger(Event.Replacement, replacement_addr, replacement_entry)
-            else:
-                event_map = {
-                    'LD': Event.Load,
-                    'ST': Event.Store,
-                    'IFETCH': Event.Load  # Assuming IFETCH treated as a load for simplicity
-                }
-                event = event_map.get(msg.type, None)
-                if event:
-                    self.trigger(event, msg.addr, entry)
-                else:
-                    raise ValueError("Unexpected request type from processor")            
+    def externalLoadHit(self):
+        print("External load hit processed.")
 
-################      
+    def popMandatoryQueue(self):
+        self.channels["mandatory_in"].dequeue()
+        print("Response queue popped for processing.")
 
-    ##==========================================
-    # STATE TRANSITION
+    def popResponseQueue(self):
+        self.channels["response_in"].dequeue()
+        print("Response queue popped for processing.")
+
+    def popForwardQueue(self):
+        self.channels["forward_in"].dequeue()
+        print("Forward queue popped for processing.")
+           
+
+## STATE TRANSITION
     # process event
-    def doTransition(self, event, message=None):
-        print(f"Processing event: {event} in state: {self.cache_state}")
-        ## state transition
+    # 24 if expected
+    def doTransition(self, event, cache_entry, message=None):
+        print(f"Processing event: {event} in state: {cache_entry.state}")
+        
+        ## define state transition
         ## transition (cur_state, event, next_state) --> action
-        if self.cache_state == State.I:
-            if event == Event.Load:
-                self.cache_state =  State.IS_D                
-                # Actions to Define
-                print("Transition to IS_D state: Load request received in Invalid state.")
+        if cache_entry.state is State.I:
+            if event is Event.Load:
+                cache_state =  State.IS_D
+                self.allocateCacheBlock()
+                self.allocate()
+                print("Transition from I to IS_D state: Load request received in Invalid state.")
 
-        elif self.cache_state == State.IS_D :
-            if event == Event.DataDirNoAcks:
+        elif cache_entry.state is State.I:
+            if event is Event.Store:
+                cache_state =  State.IM_D                
+                # Actions to Define
+                print("Transition from I to IM_D state: Store request received in Invalid state.")
+
+        elif cache_entry.state is State.IS_D :
+            if event in [event.Load, event.Store, event.Replacement]:
                 self.data_block = message.data_block
-                self.cache_state = State.S
+                self.stall
+            if event is event.Inv:
+                self.sendInvAcktoReq()
+
+            elif event in [event.DataDirNoAcks, event.DataOwner]:
+                cache_entry.state = State.S
                 print("Transition to Shared state: Data received with no ACKs required.")
 
-        elif self.cache_state == State.IS_D :
-            if event in [event.DataDirNoAcks, event.DataOwner]:
-                self.cache_state = 'S'
-                # Actions to define
-            # elif event in [event.Load, event.Store, event.Replacement, event.Inv]:
-                # stall
+        elif cache_entry.state in [State.IM_AD, State.IM_A] :
+            if event in [event.Load, event.Store, event.FwdGetS, event.FwdGetM]:
+                self.stall
 
-        elif self.cache_state == State.S:
-            if event == Event.Store:
-                self.cache_state = 'SM_AD'
+        elif cache_entry.state is [State.IM_AD, State.SM_AD]:
+            if event in [Event.DataDirNoAcks, Event.DataOwner]:
+                cache_entry.state = State.M
+                print("Transition to M state: Data received with no ACKs required.")
+                self.writeDataToCache()
+                self.storeAcks()
+                self.popResponseQueue()    
+
+        elif cache_entry.state is State.IM_AD:
+            if event is Event.DataDirAcks:
+                cache_entry.state = State.IM_A
+                print("Transition to IM_A state: Data received with ACKs required.")
+                self.writeDataToCache()
+                self.storeAcks()
+                self.popResponseQueue()
+        
+        elif cache_entry.state in [State.IM_AD, State.IM_A, State.SM_AD, State.SM_A] :
+            if event is event.InvAck:
+                self.decrAcks()
+                popMandatoryQueue()        
+
+        elif cache_entry.state is [State.IM_A, State.SM_A]:
+            if event is event.LastInvAck:
+                cache_entry.state = State.M
+                print("Transition to M state: Data received with no ACKs required.")
+                self.deallocateTBE()
+                self.externalStoreHit()
+                self.popResponseQueue()    
+
+        elif cache_entry.state in [State.S, State.SM_AD, State.SM_A, State.M] :
+            if event in event.Load:
+                self.loadHit()
+                self.popResponseQueue()
+
+        elif cache_entry.state is State.S:
+            if event is Event.Store:
+                cache_entry.state = 'SM_AD'
+                sendGetM()
+                popMandatoryQueue()
                 print("Transition to SM_AD state: Store request received in Shared state.")
-
-        elif self.cache_state == State.SM_AD:
-            if event == Event.InvAck:
+        
+        elif cache_entry.state in [State.SM_AD, State.SM_A]:
+            if event in [Event.Store, Event.Replacement, Event.FwdGetS, Event.FwdGetM]:
+                print("Stalling: Unsupported event in SM_AD, SM_A state.")
+        
+        elif cache_entry.state is State.SM_AD:
+            if event is Event.InvAck:
                 self.acks_outstanding -= 1
                 print(f"Processed InvAck: {self.acks_outstanding} ACKs remaining.")
 
-            if self.acks_outstanding == 0 and event == Event.LastInvAck:
-                self.cache_state = State.M
+            if self.acks_outstanding is 0 and event is Event.LastInvAck:
+                cache_entry.state = State.M
                 print("Transition to Modified state: Last InvAck received.")
 
-        elif self.cache_state == State.M:
-            if event == Event.Replacement:
-                self.cache_state = State.I
+        elif cache_entry.state is State.M:
+            if event is Event.Replacement:
+                cache_entry.state = State.I
                 self.data_block = None
                 print("Invalidated cache: Replacement occurred.")
 
-    def receive_message(self, message):
-        if message.msg_type == 'Data':
-            self.process_event(Event.DataDirNoAcks, message)
+            elif event is Event.Store:
+                print("Processing Store event in Modified state.")
+                self.storeHit()
+                self.forwardEviction()
+                self.popMandatoryQueue()
 
+            elif event is Event.FwdGetS:
+                print("Processing FwdGetS event in Modified state.")
+                self.sendCacheDataToReq()
+                self.sendCacheDataToDir(message)
+                self.popForwardQueue()
 
+            elif event is Event.FwdGetM:
+                print("Processing FwdGetM event in Modified state.")
+                self.sendCacheDataToReq()
+                self.deallocateCacheBlock()
+                self.popForwardQueue()
+
+        elif cache_entry.state in [State.MI_A, State.SI_A, State.II_A]:
+            if event in [Event.Load, Event.Store, Event.Replacement]:
+                self.stall
+                print("Stalling: Unsupported event in MI_A, SI_A, or II_A state.")
+
+            if event is Event.PutAck:
+                cache_entry.state = State.I
+                print("Transition to I state: PutAck received.")
+                self.deallocateCacheBlock()
+                self.popForwardQueue()        
     
-    def is_available(self, addr):
-        return len(self.entries) < self.capacity
+        elif cache_entry.state is State.MI_A:
+            if event is Event.FwdGetS:
+                cache_entry.state = State.SI_A
+                print("Transition to SI_A state: Forwarding cache data.")
+                self.sendCacheDataToReq()
+                self.sendCacheDataToDir()
+                self.popForwardQueue()
 
-    def probe(self, addr):
-        # For simplicity, return a random address to be replaced
-        return list(self.entries.keys())[0] if self.entries else None
+            elif event is Event.FwdGetM:
+                cache_entry.state = State.II_A
+                print("Transition to II_A state: Forwarding cache data.")
+                self.sendCacheDataToReq()
+                self.popForwardQueue()
 
-    def get_cache_entry(self, addr):
-        if addr in self.entries:
-            return self.entries[addr]
-        return None
+        elif cache_entry.state is State.SI_A:
+            if event is Event.Inv:
+                cache_entry.state = State.II_A
+                print("Transition to II_A state: Invalidating cache block.")
+                self.sendInvAcktoReq()
+                self.popForwardQueue()
 
-    def allocate(self, addr, entry):
-        if len(self.entries) >= self.capacity:
-            self.deallocate(self.probe(addr))
-        self.entries[addr] = entry
+        elif cache_entry.state is State.II_A:
+            if event is Event.PutAck:
+                cache_entry.state = State.I
+                print("Transition to I state: PutAck received.")
+                self.deallocateCacheBlock()
+                self.popForwardQueue()
 
-    def deallocate(self, addr):
-        if addr in self.entries:
-            del self.entries[addr]
-
-# # Define how to handle incoming requests
-# # not used
-# def handle_incoming_requests(cache, queue):
-#     if queue.is_ready():
-#         request = queue.peek()
-#         #request = queue.dequeue()
-#         if request is None:
-#             return
-#         cache_entry = cache.get_cache_entry(request.line_address)
-#         if cache_entry is None and not cache.is_available(request.line_address):
-#             replacement_address = cache.probe(request.line_address)
-#             cache.deallocate(replacement_address)
-#             print(f"Evicted cache entry from {replacement_address} to make room")
-#             cache_entry = CacheEntry()  # Create a new cache entry for simulation
-#             cache.allocate(request.line_address, cache_entry)
-#         else:
-#             # Placeholder for event handling logic
-#             print(f"Handling {request.request_type} for address {request.line_address}")
-#             queue.dequeue()  # Remove the request from the queue after handling
+clock = Clock()
+for i in range(100):
+    clock.clockEdge()
 
 # Cache Test
 # Example of creating and using the Cache
 cache_size = 10  # Define the size of the cache
 cache = Cache(cache_size)
 # Set some entries
-cache.set_entry(1, 'Modified', True, True, [0x01, 0x02, 0x03, 0x04])
-cache.set_entry(3, 'Shared', True, False, [0x05, 0x06, 0x07, 0x08])
+cache.set_entry(0x1, 'Modified', True, True, [0x01, 0x02, 0x03, 0x04])
+cache.set_entry(0x300, 'Shared', True, False, [0x05, 0x06, 0x07, 0x08])
 # Print all cache contents
 cache.print_contents()
 
+dut = proc_cache(cache_size=8, ways = 2, line_size = 2, memory = 16) 
 
-# # test 1
-# # Instantiate cache and queue
-cache = Cache(10)
-cache_ctrl = CacheController(cache)
+
+# test 1
+# Instantiate cache and queue
+
+cache_ctrl = CacheController(cache, clock)
+# cache_ctrl.monitor_tick()
 # mandatory_queue = MandatoryQueue()
 # # Simulate adding requests to the queue and handling them
 # mandatory_queue.enqueue(MemRequest("0x1A", "Load"))
@@ -505,27 +709,49 @@ cache_ctrl = CacheController(cache)
 # handle_incoming_requests(cache_ctrl, mandatory_queue)
 # handle_incoming_requests(cache_ctrl, mandatory_queue)
 
-# test2
-sample_msg = ResponseMsg(
-    addr="0x1A",
-    response_type=responseType.Data,
-    src="Node1",
-    dest="Node2",
-    data_block="100",
-    ackCnt="2"
-)
+msg = Message(MessageType.LD, 0x0, "Node1", "Node2", [0x01, 0x02, 0x03, 0x04])
+cache_ctrl.channels['mandatory_in'].print_all_messages()
+for i in range(5):
+    #cache_ctrl.channels['mandatory_in'].send_message(msg)
+    cache_ctrl.channels['response_in'].send_message(msg)
+    
+cache_ctrl.channels['mandatory_in'].print_all_messages()
+cache_ctrl.handle_mandatory()
+cache_ctrl.handle_mandatory()
+cache_ctrl.handle_mandatory()
+# print(cache_ctrl.channels['mandatory_in'])
 
-sample_msg2 = ResponseMsg(
-    addr="0x1A",
-    response_type=responseType.Data,
-    src="Node1",
-    dest="Node2",
-    data_block="100",
-    ackCnt="2"
-)
-cache_ctrl.channels['response_in'].send_message(sample_msg)
-cache_ctrl.channels['response_in'].send_message(sample_msg2)
-cache_ctrl.channels['response_in'].print_all_messages()
+for i in range(5):
+    clock.clockEdge()
+    if cache_ctrl.channels['response_in'].is_empty():
+        if cache_ctrl.channels['forward_in'].is_empty():
+            cache_ctrl.handle_mandatory()
+        else:
+            cache_ctrl.handle_forwards()
+    else :
+        cache_ctrl.handle_response()
+
+# # test2
+# sample_msg = Message(
+#     addr="0x1A",
+#     response_type=responseType.Data,
+#     src="Node1",
+#     dest="Node2",
+#     data_block="100",
+#     ackCnt="2"
+# )
+
+# sample_msg2 = Message(
+#     addr="0x1A",
+#     response_type=responseType.Data,
+#     src="Node1",
+#     dest="Node2",
+#     data_block="100",
+#     ackCnt="2"
+# )
+# cache_ctrl.channels['response_in'].send_message(sample_msg)
+# cache_ctrl.channels['response_in'].send_message(sample_msg2)
+# cache_ctrl.channels['response_in'].print_all_messages()
 
 
 # # test 3
@@ -533,7 +759,7 @@ cache_ctrl.channels['response_in'].print_all_messages()
 # cache_controller = CacheController()
 # cache_controller.process_event(Event.Load)
 # message = Message('Data', 'Directory', 'Cache', 'data_block_123')
-# cache_controller.receive_message(message)
+# cache_controller.peek(message)
 # cache_controller.process_event(Event.Store)
 # cache_controller.process_event(Event.InvAck)
 # cache_controller.process_event(Event.LastInvAck)
