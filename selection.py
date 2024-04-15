@@ -1,5 +1,5 @@
 from enum import Enum
-from trace import Trace
+from helper import Trace
 from heuristic import owner_benefit
 from heuristic import shared_state_benefit
 from heuristic import owner_pred_benefit

@@ -1,40 +1,10 @@
-from enum import Enum
 from typing import Optional
 
-from core import BLOCK_SIZE
-from main import traces
-
-
-class Inst(Enum):
-    load = 1
-    store = 2
-    barrier = 3
-    acquire = 4
-    release = 5
-
-
-class ProcType(Enum):
-    CPU = 1
-    GPU = 2
-
-
-class Trace:
-    def __init__(
-            self,
-            _inst: Inst,
-            _proctype: ProcType,
-            _value: int,
-            _addr: int,
-            _core: int,
-            _index: int,
-    ):
-        self.inst = _inst
-        self.proctype = _proctype
-        self.value = _value
-        self.addr = _addr
-        self.core = _core
-        self.index = _index
-
+from globals import BLOCK_SIZE
+from globals import traces
+from globals import Inst
+from globals import ProcType
+from globals import Trace
 
 class Helper:
     @staticmethod
@@ -55,14 +25,17 @@ class Helper:
 
     @staticmethod
     def same_core(t1: Trace, t2: Trace) -> bool:
+        if not t1 or not t2: return False
         return t1.core == t2.core
 
     @staticmethod
     def diff_core(t1: Trace, t2: Trace) -> bool:
+        if not t1 or not t2: return False
         return t1.core != t2.core
 
     @staticmethod
     def same_inst(t1: Trace, t2: Trace) -> bool:
+        if not t1 or not t2: return False
         return t1.inst == t2.inst
 
     '''
