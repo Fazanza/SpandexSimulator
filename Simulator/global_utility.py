@@ -37,6 +37,16 @@ class msg_type(Enum):
     FwdReqOdata = auto()
     FwdRvkO = auto()
     Inv = auto()
+    
+    # Req generated from Node Instruction
+    Load = auto()
+    Store = auto()
+    Barrier = auto()
+
+class type(Enum):
+    Success = auto()
+    Block = auto()
+    Error = auto()
 
 class msg:
     def __init__(self, msg_type, addr, src, dst, ack_cnt, fwd_dst):
@@ -80,3 +90,29 @@ class Queue:
     def clear(self):
         """Remove all items from the queue."""
         self.items = []
+        
+class Map:
+    def __init__(self):
+        self.map = {}
+
+    def insert(self, key, value):
+        if key in self.map:
+            print(f"Error: Key '{key}' already exists.")
+            return False
+        self.map[key] = value
+        return True
+
+
+    def search(self, key):
+        if key in self.map:
+            return self.map[key]
+        else:
+            print(f"Key: {key} not found.")
+            return None
+
+    def change(self, key, value):
+        if key in self.map:
+            self.map[key] = value
+            print(f"Changed Key: {key} to new Value: {value}")
+        else:
+            print(f"Error: Key '{key}' not found. No value changed.")

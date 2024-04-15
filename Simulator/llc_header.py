@@ -49,8 +49,3 @@ class llc_msg_type(Enum):
     FwdReqOdata = auto()
     FwdRvkO = auto()
     Inv = auto()
-
-
-class Type(Enum):
-    Success = auto()
-    Block = auto()

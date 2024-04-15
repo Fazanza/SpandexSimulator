@@ -1,444 +1,415 @@
-current_partition:6
-st 1325 41 gpu_0
-ld 1286 gpu_0
-ld 1211 gpu_0
-st 1377 41 gpu_0
-ld 1211 gpu_0
-ld 1372 gpu_0
-st 1344 41 gpu_0
-ld 1202 gpu_0
-ld 1322 gpu_0
-ld 1221 gpu_0
-st 1396 41 gpu_0
-st 1223 41 gpu_0
-ld 1319 gpu_0
-st 1286 41 gpu_0
-st 1279 41 gpu_0
-ld 1297 gpu_0
-st 1258 41 gpu_0
-st 1368 41 gpu_0
-st 1241 41 gpu_0
-ld 1389 gpu_0
-st 1242 41 gpu_0
-ld 1303 gpu_0
-st 1336 41 gpu_0
-ld 1399 gpu_0
-ld 1350 gpu_0
-ld 1299 gpu_0
-ld 1214 gpu_0
-st 1320 41 gpu_0
-ld 1271 gpu_0
-ld 1298 gpu_0
-ld 1293 gpu_0
-ld 1267 gpu_0
-ld 1245 gpu_0
-st 1259 41 gpu_0
-st 1275 41 gpu_0
-st 1397 41 gpu_0
-st 1381 41 gpu_0
-ld 1306 gpu_0
-ld 1380 gpu_0
-ld 1358 gpu_0
-ld 1348 gpu_0
-st 1220 41 gpu_0
-ld 1267 gpu_0
-ld 1349 gpu_0
-ld 1281 gpu_0
-st 1266 41 gpu_0
-ld 1262 gpu_0
-ld 1235 gpu_0
-ld 1207 gpu_0
-ld 1322 gpu_0
-st 1238 41 gpu_0
-st 1371 41 gpu_0
-ld 1334 gpu_0
-ld 1345 gpu_0
-st 1255 41 gpu_0
-st 1287 41 gpu_0
-st 1244 41 gpu_0
-st 1366 41 gpu_0
-st 1325 41 gpu_0
-ld 1312 gpu_0
-ld 1359 gpu_0
-st 1234 41 gpu_0
-st 1258 41 gpu_0
-ld 1333 gpu_0
-ld 1390 gpu_0
-ld 1324 gpu_0
-ld 1281 gpu_0
-ld 1278 gpu_0
-st 1379 41 gpu_0
-st 1228 41 gpu_0
-ld 1316 gpu_0
-ld 1307 gpu_0
-ld 1221 gpu_0
-st 1299 41 gpu_0
-ld 1245 gpu_0
-ld 1343 gpu_0
-st 1203 41 gpu_0
-ld 1398 gpu_0
-ld 1345 gpu_0
-st 1264 41 gpu_0
-st 1273 41 gpu_0
-ld 1288 gpu_0
-st 1219 41 gpu_0
-st 1218 41 gpu_0
-ld 1328 gpu_0
-st 1346 41 gpu_0
-st 1379 41 gpu_0
-st 1213 41 gpu_0
-st 1350 41 gpu_0
-ld 1341 gpu_0
-st 1255 41 gpu_0
-ld 1282 gpu_0
-ld 1267 gpu_0
-ld 1306 gpu_0
-st 1351 41 gpu_0
-st 1379 41 gpu_0
-st 1304 41 gpu_0
-st 1208 41 gpu_0
-ld 1256 gpu_0
-ld 1289 gpu_0
-ld 1273 gpu_0
-st 1201 41 gpu_0
-st 1368 41 gpu_0
-ld 1373 gpu_0
-st 1319 41 gpu_0
-st 1337 41 gpu_0
-st 1304 41 gpu_0
-st 1240 41 gpu_0
-ld 1223 gpu_0
-ld 1339 gpu_0
-ld 1207 gpu_0
-st 1375 41 gpu_0
-ld 1343 gpu_0
-ld 1368 gpu_0
-ld 1395 gpu_0
-ld 1288 gpu_0
-ld 1216 gpu_0
-ld 1375 gpu_0
-st 1235 41 gpu_0
-st 1302 41 gpu_0
-st 1215 41 gpu_0
-st 1328 41 gpu_0
-st 1386 41 gpu_0
-ld 1217 gpu_0
-ld 1219 gpu_0
-st 1366 41 gpu_0
-ld 1324 gpu_0
-st 1260 41 gpu_0
-ld 1206 gpu_0
-st 1344 41 gpu_0
-ld 1382 gpu_0
-ld 1354 gpu_0
-st 1226 41 gpu_0
-ld 1312 gpu_0
-ld 1246 gpu_0
-st 1351 41 gpu_0
-st 1288 41 gpu_0
-st 1370 41 gpu_0
-ld 1339 gpu_0
-ld 1325 gpu_0
-st 1283 41 gpu_0
-st 1360 41 gpu_0
-ld 1299 gpu_0
-ld 1353 gpu_0
-st 1370 41 gpu_0
-st 1293 41 gpu_0
-ld 1214 gpu_0
-ld 1376 gpu_0
-st 1260 41 gpu_0
-ld 1268 gpu_0
-ld 1298 gpu_0
-st 1303 41 gpu_0
-st 1344 41 gpu_0
-ld 1224 gpu_0
-st 1350 41 gpu_0
-st 1400 41 gpu_0
-ld 1303 gpu_0
-st 1287 41 gpu_0
-ld 1243 gpu_0
-ld 1358 gpu_0
-st 1270 41 gpu_0
-ld 1250 gpu_0
-st 1202 41 gpu_0
-st 1252 41 gpu_0
-st 1400 41 gpu_0
-st 1334 41 gpu_0
-st 1386 41 gpu_0
-ld 1324 gpu_0
-ld 1281 gpu_0
-ld 1296 gpu_0
-ld 1375 gpu_0
-ld 1205 gpu_0
-st 1377 41 gpu_0
-st 1290 41 gpu_0
-ld 1307 gpu_0
-st 1347 41 gpu_0
-ld 1348 gpu_0
-ld 1299 gpu_0
-ld 1222 gpu_0
-ld 1355 gpu_0
-st 1325 41 gpu_0
-st 1217 41 gpu_0
-st 1328 41 gpu_0
-st 1240 41 gpu_0
-ld 1328 gpu_0
-ld 1386 gpu_0
-ld 1250 gpu_0
-ld 1279 gpu_0
-st 1281 41 gpu_0
-st 1207 41 gpu_0
-st 1399 41 gpu_0
-ld 1262 gpu_0
-st 1343 41 gpu_0
-ld 1282 gpu_0
-ld 1238 gpu_0
-st 1240 41 gpu_0
-ld 1228 gpu_0
-ld 1270 gpu_0
-ld 1234 gpu_0
-ld 1399 gpu_0
-ld 1245 gpu_0
-st 1390 41 gpu_0
-st 1400 41 gpu_0
-ld 1390 gpu_0
-st 1235 41 gpu_0
-st 1220 41 gpu_0
-ld 1328 gpu_0
-ld 1350 gpu_0
-ld 1202 gpu_0
-ld 1293 gpu_0
-ld 1207 gpu_0
-ld 1382 gpu_0
-ld 1386 gpu_0
-st 1216 41 gpu_0
-st 1380 41 gpu_0
-st 1375 41 gpu_0
-st 1282 41 gpu_0
-ld 1275 gpu_0
-ld 1255 gpu_0
-ld 1358 gpu_0
-barrier_0 1
-current_partition:1
-ld 309 gpu_0
-st 284 41 gpu_0
-ld 279 gpu_0
-st 369 41 gpu_0
-st 338 41 gpu_0
-st 231 41 gpu_0
-ld 344 gpu_0
-st 269 41 gpu_0
-st 262 41 gpu_0
-ld 218 gpu_0
-ld 378 gpu_0
-st 269 41 gpu_0
-ld 255 gpu_0
-ld 277 gpu_0
-ld 301 gpu_0
-st 400 41 gpu_0
-ld 211 gpu_0
-ld 265 gpu_0
-ld 287 gpu_0
-st 259 41 gpu_0
-ld 347 gpu_0
-ld 351 gpu_0
-ld 208 gpu_0
-st 243 41 gpu_0
-ld 214 gpu_0
-ld 254 gpu_0
-st 369 41 gpu_0
-st 323 41 gpu_0
-st 274 41 gpu_0
-st 239 41 gpu_0
-st 234 41 gpu_0
-st 356 41 gpu_0
-ld 272 gpu_0
-st 201 41 gpu_0
-ld 319 gpu_0
-st 377 41 gpu_0
-st 277 41 gpu_0
-st 370 41 gpu_0
-st 253 41 gpu_0
-ld 314 gpu_0
-st 338 41 gpu_0
-ld 330 gpu_0
-ld 374 gpu_0
-st 387 41 gpu_0
-st 351 41 gpu_0
-st 277 41 gpu_0
-st 268 41 gpu_0
-ld 320 gpu_0
-st 331 41 gpu_0
-st 304 41 gpu_0
-st 390 41 gpu_0
-ld 325 gpu_0
-st 324 41 gpu_0
-st 223 41 gpu_0
-ld 363 gpu_0
-st 314 41 gpu_0
-ld 212 gpu_0
-st 319 41 gpu_0
-st 249 41 gpu_0
-st 218 41 gpu_0
-ld 355 gpu_0
-ld 399 gpu_0
-st 308 41 gpu_0
-st 333 41 gpu_0
-st 230 41 gpu_0
-ld 326 gpu_0
-ld 289 gpu_0
-st 224 41 gpu_0
-ld 398 gpu_0
-st 352 41 gpu_0
-ld 300 gpu_0
-st 210 41 gpu_0
-st 288 41 gpu_0
-st 271 41 gpu_0
-ld 233 gpu_0
-ld 340 gpu_0
-st 354 41 gpu_0
-st 393 41 gpu_0
-ld 395 gpu_0
-ld 365 gpu_0
-ld 253 gpu_0
-ld 335 gpu_0
-ld 232 gpu_0
-st 275 41 gpu_0
-st 314 41 gpu_0
-ld 326 gpu_0
-st 374 41 gpu_0
-ld 381 gpu_0
-ld 273 gpu_0
-st 204 41 gpu_0
-ld 291 gpu_0
-ld 202 gpu_0
-st 219 41 gpu_0
-st 232 41 gpu_0
-st 225 41 gpu_0
-ld 341 gpu_0
-st 216 41 gpu_0
-st 305 41 gpu_0
-ld 375 gpu_0
-ld 328 gpu_0
-st 255 41 gpu_0
-ld 337 gpu_0
-st 288 41 gpu_0
-st 221 41 gpu_0
-st 322 41 gpu_0
-ld 331 gpu_0
-ld 288 gpu_0
-st 378 41 gpu_0
-ld 298 gpu_0
-st 228 41 gpu_0
-ld 246 gpu_0
-st 345 41 gpu_0
-st 313 41 gpu_0
-st 349 41 gpu_0
-st 293 41 gpu_0
-ld 284 gpu_0
-st 210 41 gpu_0
-st 262 41 gpu_0
-st 306 41 gpu_0
-ld 251 gpu_0
-ld 362 gpu_0
-ld 334 gpu_0
-ld 363 gpu_0
-st 389 41 gpu_0
-st 206 41 gpu_0
-ld 314 gpu_0
-st 276 41 gpu_0
-st 376 41 gpu_0
-ld 278 gpu_0
-ld 319 gpu_0
-st 371 41 gpu_0
-st 334 41 gpu_0
-ld 285 gpu_0
-st 394 41 gpu_0
-ld 398 gpu_0
-st 260 41 gpu_0
-st 235 41 gpu_0
-ld 281 gpu_0
-st 231 41 gpu_0
-ld 354 gpu_0
-ld 297 gpu_0
-ld 291 gpu_0
-ld 301 gpu_0
-ld 231 gpu_0
-st 221 41 gpu_0
-st 232 41 gpu_0
-st 283 41 gpu_0
-ld 392 gpu_0
-st 364 41 gpu_0
-st 234 41 gpu_0
-st 386 41 gpu_0
-ld 351 gpu_0
-st 292 41 gpu_0
-st 204 41 gpu_0
-st 249 41 gpu_0
-ld 376 gpu_0
-st 362 41 gpu_0
-ld 222 gpu_0
-st 349 41 gpu_0
-st 245 41 gpu_0
-ld 351 gpu_0
-ld 223 gpu_0
-st 334 41 gpu_0
-st 397 41 gpu_0
-st 356 41 gpu_0
-st 278 41 gpu_0
-st 235 41 gpu_0
-st 375 41 gpu_0
-st 314 41 gpu_0
-st 267 41 gpu_0
-ld 248 gpu_0
-st 399 41 gpu_0
-ld 377 gpu_0
-ld 353 gpu_0
-st 238 41 gpu_0
-st 382 41 gpu_0
-ld 349 gpu_0
-st 300 41 gpu_0
-ld 331 gpu_0
-ld 281 gpu_0
-st 390 41 gpu_0
-ld 309 gpu_0
-st 277 41 gpu_0
-st 400 41 gpu_0
-ld 201 gpu_0
-st 223 41 gpu_0
-st 265 41 gpu_0
-ld 341 gpu_0
-ld 269 gpu_0
-st 354 41 gpu_0
-st 268 41 gpu_0
-st 308 41 gpu_0
-st 276 41 gpu_0
-ld 285 gpu_0
-ld 347 gpu_0
-ld 228 gpu_0
-ld 313 gpu_0
-ld 238 gpu_0
-ld 253 gpu_0
-ld 216 gpu_0
-ld 231 gpu_0
-ld 271 gpu_0
-st 218 41 gpu_0
-ld 309 gpu_0
-st 349 41 gpu_0
-st 225 41 gpu_0
-ld 254 gpu_0
-st 221 41 gpu_0
-st 212 41 gpu_0
-st 235 41 gpu_0
-st 393 41 gpu_0
-ld 353 gpu_0
-st 349 41 gpu_0
-st 223 41 gpu_0
-st 221 41 gpu_0
-st 248 41 gpu_0
-ld 306 gpu_0
-st 279 41 gpu_0
-st 267 41 gpu_0
-st 269 41 gpu_0
-barrier_3 1
+ld 15
+st 11
+ld 16
+ld 15
+st 16
+st 10
+ld 19
+st 1
+ld 14
+ld 2
+st 2
+st 1
+ld 12
+ld 9
+ld 11
+ld 8
+st 8
+ld 5
+ld 19
+ld 19
+st 18
+ld 16
+st 16
+ld 16
+st 0
+ld 1
+st 13
+ld 6
+st 15
+st 5
+ld 2
+ld 14
+st 3
+ld 2
+ld 3
+st 9
+st 1
+ld 4
+st 12
+st 13
+Barrier 0 2
+ld 26
+st 34
+st 35
+st 39
+ld 22
+ld 20
+ld 32
+st 28
+ld 32
+ld 31
+ld 39
+ld 23
+ld 32
+ld 33
+ld 30
+st 31
+ld 28
+st 37
+st 35
+ld 28
+ld 23
+st 20
+st 24
+ld 26
+ld 38
+st 24
+ld 26
+st 36
+st 36
+ld 26
+st 20
+ld 38
+st 34
+st 22
+ld 27
+st 22
+ld 24
+st 31
+ld 23
+st 23
+Barrier 1 4
+st 49
+ld 43
+ld 58
+ld 48
+ld 42
+st 59
+st 52
+st 41
+ld 52
+st 58
+st 49
+st 55
+ld 45
+ld 49
+ld 53
+st 56
+st 55
+ld 41
+st 45
+ld 43
+ld 52
+st 51
+st 52
+ld 57
+st 46
+ld 40
+st 45
+st 49
+ld 51
+ld 59
+st 44
+st 45
+ld 57
+st 43
+ld 44
+ld 44
+ld 47
+ld 46
+ld 58
+ld 54
+Barrier 2 4
+st 63
+ld 61
+st 61
+st 68
+ld 71
+st 77
+ld 67
+st 78
+ld 76
+ld 77
+st 78
+st 73
+st 65
+st 73
+st 66
+ld 65
+ld 70
+ld 61
+st 79
+ld 76
+st 74
+st 60
+st 79
+ld 63
+ld 62
+ld 64
+st 72
+ld 73
+st 65
+ld 72
+ld 73
+st 75
+ld 62
+ld 77
+ld 77
+ld 63
+ld 68
+ld 75
+ld 61
+st 74
+Barrier 3 2
+st 82
+st 83
+ld 83
+st 98
+st 82
+ld 98
+ld 98
+st 92
+st 95
+st 93
+ld 94
+st 88
+st 92
+ld 94
+ld 95
+ld 84
+ld 88
+ld 81
+st 98
+st 97
+st 98
+ld 85
+ld 96
+ld 97
+st 82
+st 99
+ld 94
+st 87
+st 97
+st 95
+st 90
+ld 97
+st 94
+ld 85
+ld 99
+ld 83
+ld 81
+ld 97
+ld 91
+st 84
+Barrier 4 4
+st 8 53
+ld 8
+st 2 90
+st 4 17
+ld 0
+ld 9
+ld 5
+st 6 85
+ld 3
+st 4 75
+ld 6
+st 9 61
+st 3 21
+ld 8
+st 4 92
+ld 5
+st 2 16
+ld 4
+st 3 57
+st 2 100
+Barrier 0
+ld 12
+ld 16
+ld 12
+ld 19
+st 11 58
+ld 10
+st 13 91
+st 16 28
+st 12 53
+st 15 8
+st 12 41
+st 12 97
+ld 18
+ld 12
+st 17 31
+ld 14
+st 18 16
+st 19 33
+st 10 14
+st 12 34
+Barrier 1
+ld 21
+ld 29
+st 23 85
+ld 20
+ld 23
+st 21 82
+ld 21
+st 26 82
+ld 28
+ld 23
+st 25 48
+st 23 78
+ld 28
+ld 25
+st 22 52
+st 22 70
+ld 29
+st 29 58
+ld 27
+ld 21
+Barrier 2
+st 34 35
+st 36 14
+st 38 56
+ld 39
+st 32 73
+ld 36
+ld 38
+st 32 68
+ld 30
+ld 35
+st 34 34
+ld 37
+st 37 96
+ld 32
+st 35 80
+st 31 25
+ld 36
+ld 35
+ld 34
+ld 34
+Barrier 3
+st 42 80
+ld 40
+st 49 85
+ld 41
+st 41 40
+st 41 36
+ld 43
+st 46 4
+st 42 61
+ld 44
+st 43 70
+st 46 62
+ld 46
+st 44 23
+st 42 22
+ld 48
+st 40 94
+ld 47
+st 49 18
+ld 44
+Barrier 4
+st 56 26
+ld 55
+st 53 69
+st 53 58
+ld 51
+ld 53
+ld 54
+st 50 43
+ld 52
+ld 53
+ld 59
+st 54 85
+ld 54
+ld 54
+ld 54
+st 58 90
+st 50 38
+st 56 73
+st 51 81
+st 56 29
+Barrier 5
+ld 67
+st 68 36
+st 61 71
+ld 68
+st 69 73
+ld 60
+ld 62
+ld 68
+st 64 37
+st 66 54
+ld 62
+ld 62
+ld 61
+ld 67
+st 69 86
+st 69 39
+st 68 95
+st 65 5
+ld 68
+st 66 86
+Barrier 6
+st 70 60
+ld 72
+ld 73
+ld 78
+ld 77
+ld 70
+ld 70
+ld 77
+ld 71
+st 74 87
+ld 70
+st 70 53
+st 75 14
+st 71 42
+st 76 97
+st 70 79
+st 74 71
+st 75 30
+ld 74
+ld 77
+Barrier 7
+st 81 51
+st 87 45
+st 83 17
+ld 87
+ld 81
+ld 89
+ld 88
+ld 86
+st 83 25
+ld 81
+st 83 93
+ld 86
+ld 80
+ld 88
+st 89 52
+ld 83
+ld 87
+ld 86
+ld 87
+ld 82
+Barrier 8
+st 91 91
+ld 93
+st 99 12
+st 96 76
+ld 96
+st 97 19
+ld 93
+st 94 34
+st 97 78
+ld 93
+ld 94
+st 98 89
+st 95 99
+ld 92
+st 91 54
+st 92 16
+st 91 75
+st 90 14
+ld 92
+st 95 25
+Barrier 9

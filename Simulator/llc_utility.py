@@ -58,6 +58,7 @@ class dir_cache:
     line_size = 0 # number of words in a line
     ways = 0 # cache way associativity
     total_sets = 0 # number of sets in cache
+    line_state = []
     words_state = []
     owner = []
     sharer = []
