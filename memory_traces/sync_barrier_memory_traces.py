@@ -11,7 +11,10 @@ array_length = 100
 
 barrier_per_core_low = 2
 
-additional_barrier_per_core = math.ceil((total_barriers - barrier_per_core_low) / cpu_core)
+if total_barriers - barrier_per_core_low < cpu_core:
+    additional_barrier_per_core = 1
+else:
+    additional_barrier_per_core = math.ceil((total_barriers - barrier_per_core_low) / cpu_core)
 
 
 ## Genrate barrier pattern first
@@ -19,7 +22,6 @@ additional_barrier_per_core = math.ceil((total_barriers - barrier_per_core_low) 
 
 partition_range = int(array_length/total_barriers)
 num_access_gpu = partition_range*2
-num_access_cpu = 10
 mem_type = ["ld","st"]
 
 barrier_partition = {}
