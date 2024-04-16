@@ -1,20 +1,17 @@
 ################
 # To run all tests in test cases
-# python -m unittest test_cache_system.TestCacheSystem
+# python3 -m unittest test.test_cache_system.TestCacheSystem
 #
 # To run a specific test method within a test case:
-# python -m unittest test_cache_system.TestCacheSystem.test_message_sending
+# python3 -m unittest test.test_cache_system.TestCacheSystem.test_message_sending
 #################
 import unittest
 from clock import Clock
-from msi_coherence import (
-State, Event, DeviceType, MessageType, Message, VirtualChannel, trb, trbTable, CacheEntry,
-Cache, CacheController
-)
+from msi_coherence import *
 class TestCacheSystem(unittest.TestCase):
 
 
-    def setUp(self):
+    def test_setUp(self):
         # global counter - tick
         self.clock = Clock()
         for i in range(100):
@@ -30,6 +27,27 @@ class TestCacheSystem(unittest.TestCase):
             self.cache_ctrl.channels['mandatory_in'].send_message(self.msg)
         self.cache_ctrl.channels['mandatory_in'].print_all_messages()
 
+    def test_cache(self):
+        # Example to create a cache and check availability
+        cache = Cache(size=5)
+
+        print("initial cache")
+        cache.print_contents()  # Print initial state
+
+        c1 = CacheEntry(0x1, State.S, True, True, [0x01, 0x02, 0x03, 0x04])
+        c2 = CacheEntry(0x50, State.M, True, False, [0x05, 0x06, 0x07, 0x08])
+        c3 = CacheEntry(0x100, State.I, False, False, [0x09, 0x0A, 0x0B, 0x0C])
+        c4 = CacheEntry(0x200, State.S, True, True, [0x0D, 0x0E, 0x0F, 0x10])
+        c5 = CacheEntry(0x300, State.M, True, False, [0x11, 0x12, 0x13, 0x14])
+        Cache.set_entry(cache, c1)
+        Cache.set_entry(cache, c2)
+        Cache.set_entry(cache, c3)
+        Cache.set_entry(cache, c4)
+        Cache.set_entry(cache, c5)
+
+        cache.print_contents()  # Print initial state
+        print("Is any cache available?", cache.is_cache_available())  # Check if there's available space in the cache
+
     # def enqueue_memory_trace():
     #     self.setup = setUp()
     #     msg = Message(MessageType.LD, "0x1A", "Node1", "Node2", "100")
@@ -38,7 +56,7 @@ class TestCacheSystem(unittest.TestCase):
     #         setup.cache_ctrl.channels['mandatory_in'].send_messages(msg)
     #     setup.cache_ctrl.channels['mandatory_in'].print_all_messages()
 
-    def message_handling_priority(self):
+    def test_message_handling_priority(self):
         clock = Clock()
         for i in range(100):
             clock.clockEdge()
@@ -119,7 +137,30 @@ class TestCacheSystem(unittest.TestCase):
             # for debugging
             cache_ctrl.channels['instruction_in'].print_all_messages()
 
+    def test_tbe(self):
+        # Instantiate tbeTable and add some test cases
+        tbe_table = tbeTable()
 
+        # Test 1: Allocation and Initial State Check
+        address = 0x200
+        tbe_entry = tbe(State.I, [0x19, 0x20, 0x21], 0)
+        allocated_tbe = tbe_table.allocate(address, tbe_entry)
+        print(f"allocated TBE: {allocated_tbe}")  # Expected: TBE with state 'I', empty data block, and 0 acks
+
+        # Test 2: Lookup Functionality
+        print(f"lookUp(): {tbe_table.lookup(address)}")  # Expected: Same as allocated_tbe
+        print(tbe_table.lookup(0x404))  # Expected: None
+
+        # Test 3: Deallocate and Check Absence
+        tbe_table.deallocate(address)
+        print(tbe_table.is_present(address))  # Expected: False
+
+        # Test 4: Multiple TBE Management
+        addresses = [0x100, 0x180, 0x240]
+        for addr in addresses:
+            tbe_entry = tbe(State.M, [0x19, 0x20, 0x21], 3)
+            tbe_table.allocate(addr, tbe_entry)
+        print(all(tbe_table.is_present(addr) for addr in addresses))  # Expected: True
 
     def test_message_sending(self):
         # Simulate sending a message
@@ -136,7 +177,8 @@ class TestCacheSystem(unittest.TestCase):
         # Assuming a method to handle messages
         self.cache_ctrl.handle_incoming_requests()
         # Checks go here to validate state changes
-
+    
+   
 # Run tests
 if __name__ == '__main__':
     unittest.main()
