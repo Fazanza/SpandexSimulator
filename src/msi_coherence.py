@@ -63,14 +63,23 @@ class Event(Enum):
 
 
 class MessageType(Enum):
+    # Request Messages
     GetS = auto()
     GetM = auto()
     PutS = auto()
     PutM = auto()
+
+    # Fwd In Messages
+    FwdGetS = auto()
+    FwdGetM = atuo()
     Inv = auto()
     PutAck = auto()
+
+    # Response Messages
     Data = auto()
     InvAck = auto() 
+
+    # Instruction Message
     LD = auto()
     ST = auto()
 
@@ -390,9 +399,9 @@ class CacheController:
         entry = self.cache.get_entry(msg.addr)
         #tbe = self.tbes.entries[msg.addr]
 
-        if msg.mtype is MessageType.GetS:
+        if msg.mtype is MessageType.FwdGetS:
             self.trigger(Event.FwdGetS, msg.addr, entry, msg)
-        elif msg.mtype is MessageType.GetM:
+        elif msg.mtype is MessageType.FwdGetM:
             self.trigger(Event.FwdGetM, msg.addr, entry, msg)
         elif msg.mtype is MessageType.Inv:
             self.trigger(Event.Inv, msg.addr, entry, msg)
@@ -649,9 +658,9 @@ class CacheController:
                 self.sendInvAcktoReq(message)
                 self.popForwardQueue()
                 print("Transition to I state: Invalidation request received in Shared state.")
-            # no explicit PutS message?
-            # elif event is Event.Replacement:
-            #     self.sendPutS(addr)
+            # no explicit PutS message for replacement, instead need to respond to all Ack
+            elif event is Event.Replacement:
+              cache_entry.state = State.SI_A
 
         elif cache_entry.state in [State.SM_AD, State.SM_A]:
             if event in [Event.Store, Event.Replacement, Event.FwdGetS, Event.FwdGetM]:
