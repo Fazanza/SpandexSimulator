@@ -129,7 +129,7 @@ class GPU_cache:
         for i in range(self.ways):
             line_occupied = False
             for j in range(self.line_size):
-                if(self.words_state[index][i][j] != State.I):
+                if(self.words_state[index][i][j] != State.I or self.line_state[index][i] != State.I):
                     line_occupied = True
                     break
             if not line_occupied:

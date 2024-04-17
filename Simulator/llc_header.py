@@ -34,6 +34,7 @@ class llc_msg_type(Enum):
     # Snoop response from another node
     InvAck = auto()
     RepRvkO = auto()
+    RepFwdV = auto()
     MemRep = auto()
     
     # Req send from LLC

@@ -24,6 +24,7 @@ class msg_type(Enum):
     # Snoop response from another node
     InvAck = auto()
     RepRvkO = auto()
+    RepFwdV = auto()
     MemRep = auto()
 
     # Req send from LLC
@@ -53,13 +54,20 @@ class type(Enum):
 
 
 class Msg:
-    def __init__(self, msg_type, addr, src, dst, ack_cnt, fwd_dst):
+    def __init__(self, msg_type, addr, src, dst, ack_cnt, fwd_dst, target_addr = None):
         self.msg_type = msg_type
         self.addr = addr
         self.src = src
         self.dst = dst
         self.fwd_dst = fwd_dst
         self.ack_cnt = ack_cnt
+        self.target_addr = target_addr ## when request of target addr evict lru, may need to send invalidation to LRU, need to add the request of target addr to Inv 
+    
+    def print_msg(self):
+        if self == None:
+                print(None)
+        else:
+            print(f"msg_type: {self.msg_type}, addr: {self.addr}, src: {self.src}, dst: {self.dst}, fwd_dst: {self.fwd_dst}, ack_cnt: {self.ack_cnt}, target_addr: {self.target_addr}")
 
 
 class Queue:
@@ -95,6 +103,11 @@ class Queue:
     def clear(self):
         """Remove all items from the queue."""
         self.items = []
+    
+    def print_all(self):
+        print("#################### Queue ####################")
+        for item in self.items:
+            item.print_msg()
 
 
 class Map:

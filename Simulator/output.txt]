@@ -1,0 +1,43 @@
+Request message box
+msg_type: msg_type.ReqV, addr: 64, time_stamp: 0, src: Node.GPU, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+msg_type: msg_type.ReqS, addr: 64, time_stamp: 0, src: Node.CPU0, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+msg_type: msg_type.ReqOdata, addr: 64, time_stamp: 0, src: Node.CPU1, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+#################### LLC Run at Clk Cnt 0 ####################
+### current meessage for LLC at clk 0 ###
+No Rep msg
+No Mem msg
+No Req msg
+#################### LLC Run at Clk Cnt 1 ####################
+### current meessage for LLC at clk 1 ###
+No Rep msg
+No Mem msg
+No Req msg
+#################### LLC Run at Clk Cnt 2 ####################
+### current meessage for LLC at clk 2 ###
+No Rep msg
+No Mem msg
+msg_type: msg_type.ReqS, addr: 64, time_stamp: 0, src: Node.CPU0, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+#################### LLC Run at Clk Cnt 3 ####################
+### current meessage for LLC at clk 3 ###
+No Rep msg
+No Mem msg
+No Req msg
+Request message box
+msg_type: msg_type.ReqV, addr: 64, time_stamp: 0, src: Node.GPU, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+msg_type: msg_type.ReqOdata, addr: 64, time_stamp: 0, src: Node.CPU1, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+msg_type: msg_type.ReqWT, addr: 128, time_stamp: 4, src: Node.CPU0, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+#################### LLC Run at Clk Cnt 4 ####################
+### current meessage for LLC at clk 4 ###
+No Rep msg
+No Mem msg
+No Req msg
+#################### LLC Run at Clk Cnt 5 ####################
+msg_type: msg_type.MemRep, addr: 64, src: Node.LLC, dst: Node.MEM, fwd_dst: Node.NULL, ack_cnt: 5
+### current meessage for LLC at clk 5 ###
+No Rep msg
+msg_type: msg_type.MemRep, addr: 64, src: Node.LLC, dst: Node.MEM, fwd_dst: Node.NULL, ack_cnt: 5
+msg_type: msg_type.ReqV, addr: 64, time_stamp: 0, src: Node.GPU, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+### cache state for 64 ###
+line_state: State.S
+word_state: State.S
+all_word state: [<State.S: 3>, <State.S: 3>, <State.S: 3>, <State.S: 3>, <State.S: 3>, <State.S: 3>, <State.S: 3>, <State.S: 3>, <State.S: 3>, <State.S: 3>, <State.S: 3>, <State.S: 3>, <State.S: 3>, <State.S: 3>, <State.S: 3>, <State.S: 3>]

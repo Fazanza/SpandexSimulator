@@ -1,0 +1,125 @@
+Request message box
+msg_type: msg_type.ReqOdata, addr: 128, time_stamp: 0, src: Node.CPU1, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+msg_type: msg_type.ReqOdata, addr: 256, time_stamp: 0, src: Node.CPU2, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+msg_type: msg_type.ReqOdata, addr: 384, time_stamp: 0, src: Node.CPU3, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+msg_type: msg_type.ReqOdata, addr: 512, time_stamp: 0, src: Node.GPU, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+msg_type: msg_type.ReqS, addr: 640, time_stamp: 0, src: Node.CPU0, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+
+#################### LLC Run at Clk Cnt 0 ####################
+### current meessage for LLC at clk 0 ###
+No Rep msg
+No Mem msg
+No Req msg
+
+#################### LLC Run at Clk Cnt 1 ####################
+### current meessage for LLC at clk 1 ###
+No Rep msg
+No Mem msg
+No Req msg
+
+#################### LLC Run at Clk Cnt 2 ####################
+640
+### current meessage for LLC at clk 2 ###
+No Rep msg
+No Mem msg
+msg_type: msg_type.ReqS, addr: 640, time_stamp: 0, src: Node.CPU0, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+### cache set contain 128 ###
+Addr : 640, Line State : State.IS
+Addr : 0, Line State : State.I
+#################### Queue ####################
+
+#################### LLC Run at Clk Cnt 3 ####################
+384
+### current meessage for LLC at clk 3 ###
+No Rep msg
+No Mem msg
+msg_type: msg_type.ReqOdata, addr: 384, time_stamp: 0, src: Node.CPU3, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+### cache set contain 128 ###
+Addr : 384, Line State : State.IO
+Addr : 640, Line State : State.IS
+#################### Queue ####################
+
+Request message box
+msg_type: msg_type.ReqOdata, addr: 128, time_stamp: 0, src: Node.CPU1, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+msg_type: msg_type.ReqOdata, addr: 256, time_stamp: 0, src: Node.CPU2, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+msg_type: msg_type.ReqOdata, addr: 512, time_stamp: 0, src: Node.GPU, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+#################### LLC Run at Clk Cnt 4 ####################
+640
+### current meessage for LLC at clk 4 ###
+No Rep msg
+No Mem msg
+msg_type: msg_type.ReqOdata, addr: 128, time_stamp: 0, src: Node.CPU1, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+### cache set contain 128 ###
+Addr : 384, Line State : State.IO
+Addr : 640, Line State : State.IS
+#################### Queue ####################
+
+Request message box
+msg_type: msg_type.ReqOdata, addr: 128, time_stamp: 0, src: Node.CPU1, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+msg_type: msg_type.ReqOdata, addr: 256, time_stamp: 0, src: Node.CPU2, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+msg_type: msg_type.ReqOdata, addr: 512, time_stamp: 0, src: Node.GPU, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+#################### LLC Run at Clk Cnt 5 ####################
+640
+### current meessage for LLC at clk 5 ###
+No Rep msg
+msg_type: msg_type.MemRep, addr: 640, src: Node.LLC, dst: Node.MEM, fwd_dst: Node.NULL, ack_cnt: 5, target_addr: None
+msg_type: msg_type.ReqOdata, addr: 256, time_stamp: 0, src: Node.CPU2, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+### cache set contain 128 ###
+Addr : 256, Line State : State.I_I_O
+Addr : 384, Line State : State.IO
+#################### Queue ####################
+msg_type: msg_type.Inv, addr: 640, src: Node.LLC, dst: Node.CPU0, fwd_dst: Node.NULL, ack_cnt: 0, target_addr: 256
+
+Request message box
+msg_type: msg_type.ReqOdata, addr: 128, time_stamp: 0, src: Node.CPU1, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+msg_type: msg_type.ReqOdata, addr: 512, time_stamp: 0, src: Node.GPU, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+#################### LLC Run at Clk Cnt 6 ####################
+384
+### current meessage for LLC at clk 6 ###
+No Rep msg
+msg_type: msg_type.MemRep, addr: 384, src: Node.LLC, dst: Node.MEM, fwd_dst: Node.NULL, ack_cnt: 6, target_addr: None
+msg_type: msg_type.ReqOdata, addr: 128, time_stamp: 0, src: Node.CPU1, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+
+### cache set contain 128 ###
+Addr : 256, Line State : State.I_I_O
+Addr : 384, Line State : State.OV
+#################### Queue ####################
+msg_type: msg_type.FwdReqV, addr: 384, src: Node.LLC, dst: Node.MEM, fwd_dst: Node.LLC, ack_cnt: 0, target_addr: None
+
+Request message box
+msg_type: msg_type.ReqOdata, addr: 128, time_stamp: 0, src: Node.CPU1, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+msg_type: msg_type.ReqOdata, addr: 512, time_stamp: 0, src: Node.GPU, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+#################### LLC Run at Clk Cnt 7 ####################
+384
+### current meessage for LLC at clk 7 ###
+msg_type: msg_type.RepFwdV, addr: 384, src: Node.CPU0, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0, target_addr: None
+No Mem msg
+msg_type: msg_type.ReqOdata, addr: 512, time_stamp: 0, src: Node.GPU, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+
+### cache set contain 128 ###
+Addr : 512, Line State : State.IO
+Addr : 256, Line State : State.I_I_O
+#################### Queue ####################
+
+Request message box
+msg_type: msg_type.ReqOdata, addr: 128, time_stamp: 0, src: Node.CPU1, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+#################### LLC Run at Clk Cnt 8 ####################
+256
+### current meessage for LLC at clk 8 ###
+No Rep msg
+No Mem msg
+msg_type: msg_type.ReqOdata, addr: 128, time_stamp: 0, src: Node.CPU1, dst: Node.LLC, fwd_dst: Node.NULL, ack_cnt: 0
+### cache set contain 128 ###
+Addr : 512, Line State : State.IO
+Addr : 256, Line State : State.I_I_O
+#################### Queue ####################
+
+#################### LLC Run at Clk Cnt 9 ####################
+### current meessage for LLC at clk 9 ###
+No Rep msg
+No Mem msg
+No Req msg
+### cache set contain 128 ###
+Addr : 512, Line State : State.IO
+Addr : 256, Line State : State.I_I_O
+#################### Queue ####################
