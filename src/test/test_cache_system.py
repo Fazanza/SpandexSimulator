@@ -29,24 +29,46 @@ class TestCacheSystem(unittest.TestCase):
 
     def test_cache(self):
         # Example to create a cache and check availability
-        cache = Cache(size=5)
+        cache = Cache(size=4)
 
         print("initial cache")
         cache.print_contents()  # Print initial state
 
-        c1 = CacheEntry(0x1, State.S, True, True, [0x01, 0x02, 0x03, 0x04])
-        c2 = CacheEntry(0x50, State.M, True, False, [0x05, 0x06, 0x07, 0x08])
-        c3 = CacheEntry(0x100, State.I, False, False, [0x09, 0x0A, 0x0B, 0x0C])
-        c4 = CacheEntry(0x200, State.S, True, True, [0x0D, 0x0E, 0x0F, 0x10])
-        c5 = CacheEntry(0x300, State.M, True, False, [0x11, 0x12, 0x13, 0x14])
+        c1 = CacheEntry(0x1, State.S, True, False, [0x01, 0x02, 0x03, 0x04])
+        c2 = CacheEntry(0x50, State.M, True, True, [0x05, 0x06, 0x07, 0x08])
+        c3 = CacheEntry(0x300, State.M, True, True, [0x11, 0x12, 0x13, 0x14])
+        c4 = CacheEntry(0x200, State.S, True, False, [0x0D, 0x0E, 0x0F, 0x10])
+        # Writing to same address
+        c5 = CacheEntry(0x300, State.M, True, True, [0x11, 0x12, 0x13, 0x14])
+        # Testing eviction policy
+        c6 = CacheEntry(0x400, State.M, True, True, [0x11, 0x12, 0x13, 0x14])
+        c7 = CacheEntry(0x600, State.M, True, True, [0x11, 0x12, 0x13, 0x14])
+        c8 = CacheEntry(0x800, State.M, True, True, [0x11, 0x12, 0x13, 0x14])
+        c9 = CacheEntry(0x400, State.M, True, True, [0x11, 0x12, 0x13, 0x14])
+        c10 = CacheEntry(0x900, State.M, True, True, [0x11, 0x12, 0x13, 0x14])
+        c11 = CacheEntry(0xc00, State.M, True, True, [0x11, 0x12, 0x13, 0x14])
+        # Test set eviction
+        c12 = CacheEntry(0x430, State.M, True, True, [0x11, 0x12, 0x13, 0x14])
+        c13 = CacheEntry(0x950, State.M, True, True, [0x11, 0x12, 0x13, 0x14])
+        c13 = CacheEntry(0x960, State.M, True, True, [0x11, 0x12, 0x13, 0x14])
+        c14 = CacheEntry(0xc20, State.M, True, True, [0x11, 0x12, 0x13, 0x14])
+
         Cache.set_entry(cache, c1)
         Cache.set_entry(cache, c2)
         Cache.set_entry(cache, c3)
         Cache.set_entry(cache, c4)
         Cache.set_entry(cache, c5)
+        Cache.set_entry(cache, c6)
+        Cache.set_entry(cache, c7)
+        Cache.set_entry(cache, c8)
+        Cache.set_entry(cache, c9)
+        Cache.set_entry(cache, c10)
+        Cache.set_entry(cache, c11)
+        Cache.set_entry(cache, c12)
+        Cache.set_entry(cache, c13)
+        Cache.set_entry(cache, c14)
 
         cache.print_contents()  # Print initial state
-        print("Is any cache available?", cache.is_cache_available())  # Check if there's available space in the cache
 
     # def enqueue_memory_trace():
     #     self.setup = setUp()
