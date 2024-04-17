@@ -71,7 +71,7 @@ class MessageType(Enum):
 
     # Fwd In Messages
     FwdGetS = auto()
-    FwdGetM = atuo()
+    FwdGetM = auto()
     Inv = auto()
     PutAck = auto()
 
