@@ -1,10 +1,7 @@
 from enum import Enum, auto
 import random
 from collections import deque
-from clock import Clock
 import time
-import math
-from proc_cache import proc_cache
 from global_utility import Msg as Message
 from global_utility import msg_type as MessageType
 from global_utility import *
@@ -16,7 +13,7 @@ class VirtualChannel:
     def __init__(self):
         self.messages = deque()
         self.transaction_ongoing = False
-        #self.clock = clock
+
 
     def __str__(self):
         return self.content
@@ -24,8 +21,6 @@ class VirtualChannel:
     def is_ready(self):
         # return bool(self.queue)
         return bool(self.messages)
-        # return self.clock.currentTick() >= self.clock.clockEdge()
-
 
     def send_message(self, message): #enque
         self.messages.append(message)
@@ -36,8 +31,6 @@ class VirtualChannel:
 
     def is_empty(self):
         return len(self.messages) == 0
-    
-
 
     def peek(self): #check the head point value of queue
         return self.messages[0] if self.messages else None
@@ -95,46 +88,6 @@ class Event(Enum):
 
     # Triggered after the last ack is received
     LastInvAck = auto()
-
-# Virtual Channel
-# Message Buffer
-class VirtualChannel:
-    def __init__(self):
-        self.messages = deque()
-        self.transaction_ongoing = False
-        # self.clock = clock
-
-    def __str__(self):
-        return self.content
-
-    def is_ready(self):
-        # return bool(self.queue)
-        return bool(self.messages)
-        # return self.clock.currentTick() >= self.clock.clockEdge()
-
-    def send_message(self, message):  # enque
-        self.messages.append(message)
-
-    # def receive_message(self):
-    def dequeue(self):
-        return self.messages.popleft() if self.messages else None
-
-    def is_empty(self):
-        return len(self.messages) == 0
-
-    def peek(self):  # check the head point value of queue
-        return self.messages[0] if self.messages else None
-
-    def print_all_messages(self):
-        if self.is_empty():
-            print("VC is empty")
-        print("==========================")
-        for msg in self.messages:
-            print("VC CONTENTS")
-            print(msg)  # This will invoke __str__ method of Message object
-        print(f"transaction_ongoing: {self.transaction_ongoing}")
-        print("==========================")
-
 
 # transaction buffer entry
 class tbe:
@@ -260,9 +213,8 @@ class MemRequest:
 ## --> Handles Coherence Protocol
 class CacheController:
     
-    def __init__(self, cache, clock, deviceID=Node.CPU0): 
-        self.clock = clock
-        self.cache = cache
+    def __init__(self, size, deviceID=Node.CPU0): 
+        self.cache = Cache(size)
         self.deviceID = deviceID 
         self.dirID = Node.LLC #device.getDirID()
         self.tbes = tbeTable()
@@ -275,14 +227,8 @@ class CacheController:
         }
         self.data_block = None
         self.acks_outstanding = 0
-        self.capacity = 10
-        
-        
-        self.last_checked_tick = self.clock.currentTick()
-        self.clock.register_observer(self)
-        # self.clock.register_callback(self.on_tick_update) 
-        self.clock.callback = self.on_tick_update  # Setting the callback
 
+        
     def runCPU(self):
         # Initialize a flag to check if all channels are busy
         all_busy = True
@@ -291,7 +237,7 @@ class CacheController:
         # Parse the memory trace file
         # And fill up the instruction queue
         parser = Parser()
-        parser.process_trace_file(self.channels['instruction_in'])
+        parser.process_trace_file(self.channels['instruction_in'], self.deviceID)
 
         # List all channels in order of priority
         channels = ['response_in', 'forward_in', 'instruction_in']
@@ -309,25 +255,12 @@ class CacheController:
                 elif channel_key == 'instruction_in':
                     self.handle_instruction()
             else:
+                if channel_key == 'instruction_in':
+                    print(f"{self.deviceID} run end")
                 print(f"{channel_key} is empty. Moving to the next channel.")
         if all_busy:
             print("All channels are busy. Stalling for this cycle.")
 
-
-    def on_tick_update(self, new_tick):
-        # Handle the tick update here
-        print(f"Tick changed detected in CacheController: {new_tick}")
-
-    def update(self, tick):
-        print(f"CacheController notified of tick update to: {tick}")    
-
-    def monitor_tick(self):
-        while True:
-            current_tick = self.clock.currentTick()
-            if current_tick != self.last_checked_tick:
-                print(f"Tick has changed to: {current_tick}")
-                self.last_checked_tick = current_tick
-            time.sleep(0.1)  # sleep for a short time before checking again
 
 
 ## MESSAGE HANDLE
@@ -711,3 +644,28 @@ class CacheController:
                 print("Transition to I state: PutAck received.")
                 self.deallocateCacheBlock(addr)
                 self.popForwardQueue()
+
+
+    def receive_rep_msg(self, rep_queue) : #enqueue rep_queue
+    #self.channels['response_out'] --> refer to VC
+        if is self.channels['response_out'].is_empty():
+            return None
+        else:
+            if rep_queue.is_full():
+                return None
+            else: 
+                rep_queue.enqueue(channels['response_out'][0])
+                return channels['response_out'].dequeue()
+        
+
+    def get_generated_msg(self) : #peek req_queue
+     #self.channels['request_out'] --> refer to VC
+        self.channels['request_out'].peek()
+
+    def take_generated_msg(self, ) : #pop req_queue
+        self.channels['request_out'].dequeue()
+
+    #def get_request_msg() :
+
+
+

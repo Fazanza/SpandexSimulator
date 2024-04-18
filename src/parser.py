@@ -7,53 +7,8 @@ from global_utility import msg_type as MessageType
 import os
 
 class Parser:
-    # class Node(Enum):
-    #     LLC = auto()
-    #     CPU0 = auto()
-    #     CPU1 = auto()
-    #     CPU2 = auto()
-    #     CPU3 = auto()
-    #     GPU  = auto()
-    #     MEM = auto()
-    #     NULL = auto()
 
-    # class MessageType(Enum):
-    #     GetS = auto()
-    #     GetM = auto()
-    #     PutS = auto()
-    #     PutM = auto()
-    #     FwdGetS = auto()
-    #     FwdGetM = auto()
-    #     Inv = auto()
-    #     PutAck = auto()
-    #     Data = auto()
-    #     InvAck = auto()
-    #     LD = auto()
-    #     ST = auto()
-    #     Barrier = auto()
 
-    class MemoryRequest:
-        def __init__(self, message_type, address, cpu_id=None):
-            self.message_type = message_type
-            self.address = address
-            self.cpu_id = cpu_id
-
-    # class MessageBuffer:
-    #     def __init__(self, max_size=10):
-    #         self.queue = deque()
-    #         self.max_size = max_size
-
-    #     def enqueue(self, message):
-    #         if len(self.queue) < self.max_size:
-    #             self.queue.append(message)
-    #             return True
-    #         else:
-    #             return False
-
-    #     def dequeue(self):
-    #         if self.queue:
-    #             return self.queue.popleft()
-    #         return None
 
     # not used - handle in cache_ctrl
     def parse_device_type(device_str):
