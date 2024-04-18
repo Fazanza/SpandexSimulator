@@ -724,3 +724,22 @@ class CacheController:
                 print("Transition to I state: PutAck received.")
                 self.deallocateCacheBlock(addr)
                 self.popForwardQueue()
+
+    def receive_rep_msg(self, rep_queue) : #enqueue rep_queue
+        if is self.channels['response_out'].is_empty():
+            return None
+        else:
+            if rep_queue.is_full():
+                return None
+            else: 
+                rep_queue.enqueue(channels['response_out'][0])
+                return channels['response_out'].dequeue()
+        
+
+    def get_generated_msg(self) : #peek req_queue
+        return self.channels['request_out'].peek()
+
+    def take_generated_msg(self) : #pop req_queue
+        self.channels['request_out'].dequeue()
+
+    #def get_request_msg() :
