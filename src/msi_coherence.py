@@ -4,107 +4,10 @@ from collections import deque
 from clock import Clock
 import time
 from proc_cache import proc_cache
-
-class Node(Enum):
-    LLC = auto()
-    CPU0 = auto()
-    CPU1 = auto()
-    CPU2 = auto()
-    CPU3 = auto()
-    GPU  = auto()
-    MEM = auto()
-    NULL = auto()
-
-
-# Define Cache States
-class State(Enum):
-    I = auto()
-
-    IS_D = auto()
-    IM_AD = auto()
-    IM_A = auto()
-
-    S = auto()
-
-    SM_AD = auto()
-    SM_A = auto()
-    
-    M = auto()
-
-    MI_A = auto()
-    SI_A = auto()
-    II_A = auto()
-
-
-class Event(Enum):
-    # From the processor (memory trace queue)
-    Load = auto()
-    Store = auto()
-
-    # Internal event (only triggered from processor requests)
-    Replacement = auto()
-
-    # Forwarded request from other cache on the forward network
-    FwdGetS = auto()
-    FwdGetM = auto()
-    Inv = auto()
-    PutAck = auto()
-
-    # Responses from directory
-    DataDirNoAcks = auto()
-    DataDirAcks = auto()
-
-    # Responses from other caches
-    DataOwner = auto()
-    InvAck = auto()
-
-    # Triggered after the last ack is received
-    LastInvAck = auto()
-
-
-class MessageType(Enum):
-    # Request Messages
-    GetS = auto()
-    GetM = auto()
-    PutS = auto()
-    PutM = auto()
-
-    # Fwd In Messages
-    FwdGetS = auto()
-    FwdGetM = auto()
-    Inv = auto()
-    PutAck = auto()
-
-    # Response Messages
-    Data = auto()
-    InvAck = auto() 
-
-    # Instruction Message
-    LD = auto()
-    ST = auto()
-
-
-# # Memory Operation from Memory Trace
-# class 
-
-class Message():
-    def __init__(self, mtype, addr, src, dest, fwd_dest = Node.NULL, ackCnt=0, data_block=None):
-        self.mtype = mtype
-        self.addr = addr
-        self.src = src
-        self.dest = dest
-        self.fwd_dest = fwd_dest 
-        self.ackCnt = ackCnt
-        self.dataBlock = data_block
-
-        
-    def __str__(self):
-        return (f"Message Type: {self.mtype}, "
-                f"Address: {self.addr}, "
-                f"Source: {self.src}, "
-                f"Destination: {self.dest}, "
-                f"Data Block: {self.dataBlock}, "
-                f"Ack Count: {self.ackCnt}")
+from global_utility import Msg as Message
+from global_utility import msg_type as MessageType
+from global_utility import *
+from parser import Parser
 
 # Virtual Channel
 # Message Buffer
@@ -132,6 +35,8 @@ class VirtualChannel:
 
     def is_empty(self):
         return len(self.messages) == 0
+    
+
 
     def peek(self): #check the head point value of queue
         return self.messages[0] if self.messages else None
@@ -145,6 +50,50 @@ class VirtualChannel:
             print(msg)  # This will invoke __str__ method of Message object
         print(f"transaction_ongoing: {self.transaction_ongoing}")    
         print("==========================")
+
+# Define Cache States
+class State(Enum):
+    I = auto()
+
+    IS_D = auto()
+    IM_AD = auto()
+    IM_A = auto()
+
+    S = auto()
+
+    SM_AD = auto()
+    SM_A = auto()
+    
+    M = auto()
+
+    MI_A = auto()
+    SI_A = auto()
+    II_A = auto()
+
+class Event(Enum):
+    # From the processor (memory trace queue)
+    Load = auto()
+    Store = auto()
+
+    # Internal event (only triggered from processor requests)
+    Replacement = auto()
+
+    # Forwarded request from other cache on the forward network
+    FwdGetS = auto()
+    FwdGetM = auto()
+    Inv = auto()
+    PutAck = auto()
+
+    # Responses from directory
+    DataDirNoAcks = auto()
+    DataDirAcks = auto()
+
+    # Responses from other caches
+    DataOwner = auto()
+    InvAck = auto()
+
+    # Triggered after the last ack is received
+    LastInvAck = auto()
 
 # transaction buffer entry
 class tbe:
@@ -316,9 +265,15 @@ class CacheController:
         # self.clock.register_callback(self.on_tick_update) 
         self.clock.callback = self.on_tick_update  # Setting the callback
 
-    def runL1Controller(self):
+    def runCPU(self):
         # Initialize a flag to check if all channels are busy
         all_busy = True
+
+        # Insturction Queue should be filled
+        # Parse the memory trace file
+        # And fill up the instruction queue
+        parser = Parser()
+        parser.process_trace_file(self.channels['instruction_in'])
 
         # List all channels in order of priority
         channels = ['response_in', 'forward_in', 'instruction_in']
@@ -421,16 +376,17 @@ class CacheController:
         #tbe = self.tbes.entries[msg.addr]
 
         # if miss and cache full
-        if not entry.isValid and not self.cache.is_cache_available(msg.addr):
+        #if not entry.isValid and not self.cache.is_cache_available(msg.addr):
+        if not entry.isValid and not self.cache.is_cache_available():
         # if entry.state is State.I and not self.cache.is_cache_available(msg.addr):
             # get replacement address from cache
             replacement_addr = self.cache.getReplacementAddr()
             replacement_entry = self.cache.get_entry(replacement_addr)
             self.trigger(Event.Replacement, replacement_addr, replacement_entry, msg)
         else: # if entry is valid
-            if msg.mtype is MessageType.LD:
+            if msg.mtype is MessageType.Load:
                 self.trigger(Event.Load, msg.addr, entry, msg)
-            elif msg.mtype is MessageType.ST:
+            elif msg.mtype is MessageType.Store:
                 self.trigger(Event.Store, msg.addr, entry, msg)
             else:
                 raise ValueError("Unexpected request type from processor")   
@@ -737,4 +693,26 @@ class CacheController:
                 print("Transition to I state: PutAck received.")
                 self.deallocateCacheBlock(addr)
                 self.popForwardQueue()
+
+
+    def receive_rep_msg(self, rep_queue) : #enqueue rep_queue
+        if is self.channels['response_out'].is_empty():
+            return None
+        else:
+            if rep_queue.is_full():
+                return None
+            else: 
+                rep_queue.enqueue(channels['response_out'][0])
+                return channels['response_out'].dequeue()
+        
+
+    def get_generated_msg(self) : #peek req_queue
+        self.channels['request_out'].peek()
+
+    def take_generated_msg(self, ) : #pop req_queue
+        self.channels['request_out'].dequeue()
+
+    #def get_request_msg() :
+
+
 

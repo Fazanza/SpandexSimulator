@@ -8,6 +8,10 @@
 import unittest
 from clock import Clock
 from msi_coherence import *
+from parser import *
+import os
+
+
 class TestCacheSystem(unittest.TestCase):
 
 
@@ -88,8 +92,8 @@ class TestCacheSystem(unittest.TestCase):
         cache_size = 10  # Define the size of the cache
         cache = Cache(cache_size)
         # Set some entries
-        cache.set_entry(0x1, State.S, True, True, [0x01, 0x02, 0x03, 0x04])
-        cache.set_entry(0x300, State.S, True, False, [0x05, 0x06, 0x07, 0x08])
+        #cache.set_entry(0x1, State.S, True, True, [0x01, 0x02, 0x03, 0x04])
+        #cache.set_entry(0x300, State.S, True, False, [0x05, 0x06, 0x07, 0x08])
         # Print all cache contents
         cache.print_contents()
 
@@ -102,8 +106,8 @@ class TestCacheSystem(unittest.TestCase):
         cache_ctrl = CacheController(cache, clock)
 
 
-        ld_msg = Message(MessageType.LD, 0x0, Node.CPU0, "Node2", [0x01, 0x02, 0x03, 0x04])
-        st_msg = Message(MessageType.ST, 0x0, Node.CPU0, "Node2", [0x01, 0x02, 0x03, 0x04])
+        ld_msg = Message(MessageType.Load, 0x0, Node.CPU0, "Node2", [0x01, 0x02, 0x03, 0x04])
+        st_msg = Message(MessageType.Store, 0x0, Node.CPU0, "Node2", [0x01, 0x02, 0x03, 0x04])
 
         for i in range(2):
             cache_ctrl.channels['instruction_in'].send_message(ld_msg)
@@ -135,8 +139,8 @@ class TestCacheSystem(unittest.TestCase):
             data_block=[0xDE, 0xAD, 0xBE, 0xEF]  # Example data block
         )
         #cache_ctrl.channels['response_in'].send_message(inv_ack_message)
-        cache_ctrl.channels['forward_in'].send_message(fwd_gets_message)
-        cache_ctrl.channels['instruction_in'].send_message(load_message)
+        #cache_ctrl.channels['forward_in'].send_message(fwd_gets_message)
+        #cache_ctrl.channels['instruction_in'].send_message(load_message)
 
 
 
@@ -146,14 +150,14 @@ class TestCacheSystem(unittest.TestCase):
         # cache_ctrl.handle_instruction()
         # print(cache_ctrl.channels['instruction_in'])
 
-        for i in range(5):
+        for _ in range(5):
             clock.clockEdge()
             cache_ctrl.runL1Controller()
             # for debugging
             cache_ctrl.channels['instruction_in'].print_all_messages()
 
         cache_ctrl.popInstructionQueue()
-        for i in range(5):
+        for _ in range(5):
             clock.clockEdge()
             cache_ctrl.runL1Controller()
             # for debugging
@@ -200,6 +204,19 @@ class TestCacheSystem(unittest.TestCase):
         self.cache_ctrl.handle_incoming_requests()
         # Checks go here to validate state changes
     
+    def test_mem_trace_parsing(self):
+
+        # get file path
+        src_directory = os.getcwd()
+        parent_directory = os.path.dirname(src_directory)
+        memory_traces_directory = os.path.join(parent_directory, 'memory_traces')
+        file_path = os.path.join(memory_traces_directory, 'cpu_0.txt')
+        
+
+
+        message_buffer = VirtualChannel()
+        parser = Parser()
+        parser.process_trace_file(file_path, message_buffer)
    
 # Run tests
 if __name__ == '__main__':
