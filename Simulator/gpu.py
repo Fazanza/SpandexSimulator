@@ -20,6 +20,8 @@ class GPU_Controller:
         self.wait = False
         self.current_inst = None
         self.current_rep_msg = None
+        self.barrier_name = None
+        self.barrier_name_observed = None
         
     def Fill_Inst(self, file_name):
         with open(file_name, 'r') as file:
@@ -112,8 +114,8 @@ class GPU_Controller:
             ###
             elif input_msg.msg_type == msg_type.Store:
                 self.generated_msg = Msg(msg_type.ReqWT, msg_addr, Node.GPU, Node.LLC, 0, Node.NULL)
-                self.cache.updateState_word(msg_addr, State.WTV)
-                self.cache.updateState_line(msg_addr, State.WTV)
+                self.cache.updateState_word(msg_addr, State.WTV_L)
+                self.cache.updateState_line(msg_addr, State.WTV_L)
             ###
             else:
                 return type.Error
@@ -168,6 +170,19 @@ class GPU_Controller:
                     self.cache.updateState_line(msg_addr, State.V)
             else:
                 return type.Error
+        ##########################
+        elif current_state == State.WTV_L:
+            if input_msg.msg_type == msg_type.Load:
+                return type.Block
+            ###
+            elif input_msg.msg_type == msg_type.Store:
+                return type.Block
+            ###
+            elif input_msg.msg_type == msg_type.RepWT:
+                self.cache.updateState_line_word(msg_addr, State.V)
+            ###
+            else:
+                return type.Error
         else:
             return type.Error
         return type.Success
@@ -178,12 +193,20 @@ class GPU_Controller:
         self.rep_msg_box.enqueue(msg)
         
     # receiece barrier info from top, call one time if One Node send a barrier before GPU execution in the same cycle
-    def receieve_barrier(self, barrier_name):
+    def update_barrier(self, barrier_name):
         if barrier_name != None:
-            current_value = self.barrier_map.search(barrier_name)
-            self.barrier_map.change(barrier_name, current_value-1)
-            if current_value == 1:
+            barrier_num = self.barrier_map.search(barrier_name)
+            self.barrier_map.change(barrier_name, barrier_num-1)
+        # get the barrier_num for current barrier which GPU stop at
+        current_barrier_num = self.barrier_map.search(self.barrier_name)
+        if current_barrier_num != None:
+            if current_barrier_num == 0:
                 self.wait = False
+    
+    def get_barrier(self):
+        temp = self.barrier_name_observed
+        self.barrier_name_observed = None
+        return temp;
 
     def GPU_run(self):
         # First execute response
@@ -248,7 +271,9 @@ class GPU_Controller:
                 assert self.wait == False, "Error! GPU is waiting after a Success Store"
             
         elif inst.inst_type == Inst_type.Barrier:
-            self.receieve_barrier(inst.barrier_name)
+            self.barrier_name = inst.barrier_name
+            self.barrier_name_observed = inst.barrier_name
+            self.update_barrier(inst.barrier_name)
             if self.barrier_map.search(inst.barrier_name) != 0:
                 self.wait = True
             else:
@@ -265,7 +290,7 @@ class GPU_Controller:
 
         return self.generated_msg, None
 
-    ## this function should take the response from Top, have to follow GPU_RUN(), after receieve_barrier
+    ## this function should take the response from Top, have to follow GPU_RUN(), after update_barrier
     #  whether the previous generated msg can be taken by LLC
     def GPU_POST_RUN(self, msg_taken):
         if self.generated_msg != None and self.wait == False:
@@ -279,7 +304,7 @@ class GPU_Controller:
 
 
     #############
-    # 1. Every Node before GPU execution, Call receieve_barrier()
+    # 1. Every Node before GPU execution, Call update_barrier()
     # 2. When GPU execution
     #   2.1 first call receieve_rep_msg()
     #   2.2 Then call GPU_RUN()

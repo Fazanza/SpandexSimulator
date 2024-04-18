@@ -6,6 +6,7 @@ class State(Enum):
     IV = auto()
     VI = auto()
     WTV = auto()
+    WTV_L = auto()
 
 class Inst_type(Enum):
     Load = auto()

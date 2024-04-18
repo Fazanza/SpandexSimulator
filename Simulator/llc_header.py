@@ -46,7 +46,6 @@ class llc_msg_type(Enum):
     RepOdata = auto()
     FwdReqS = auto()
     FwdReqV = auto()
-    FwdReqO = auto()
     FwdReqOdata = auto()
     FwdRvkO = auto()
     Inv = auto()

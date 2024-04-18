@@ -67,7 +67,7 @@ llc_debugger.print_LLC_generated_msg_queue()
 
 # clk 7
 print()
-llc_controller.receieve_rep_msg(msg_type.RepFwdV, 384, Node.CPU0, Node.LLC, 0, Node.NULL)
+#llc_controller.receieve_rep_msg(msg_type.RepFwdV, 384, Node.CPU0, Node.LLC, 0, Node.NULL)
 llc_debugger.print_LLC_request_box()
 llc_controller.LLC_run()
 llc_debugger.print_current_msg()

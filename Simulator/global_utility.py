@@ -25,6 +25,7 @@ class msg_type(Enum):
     InvAck = auto()
     RepRvkO = auto()
     RepFwdV = auto()
+    RepFwdV_E = auto()
     MemRep = auto()
 
     # Req send from LLC
@@ -36,7 +37,7 @@ class msg_type(Enum):
     RepOdata = auto()
     FwdReqS = auto()
     FwdReqV = auto()
-    FwdReqO = auto()
+    FwdReqV_E = auto() # ReqV exclusive, The O state in CPU will directly downgrade to 
     FwdReqOdata = auto()
     FwdRvkO = auto()
     Inv = auto()
