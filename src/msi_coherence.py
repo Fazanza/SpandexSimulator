@@ -3,6 +3,7 @@ import random
 from collections import deque
 from clock import Clock
 import time
+import math
 from proc_cache import proc_cache
 from global_utility import Msg as Message
 from global_utility import msg_type as MessageType
@@ -95,6 +96,46 @@ class Event(Enum):
     # Triggered after the last ack is received
     LastInvAck = auto()
 
+# Virtual Channel
+# Message Buffer
+class VirtualChannel:
+    def __init__(self):
+        self.messages = deque()
+        self.transaction_ongoing = False
+        # self.clock = clock
+
+    def __str__(self):
+        return self.content
+
+    def is_ready(self):
+        # return bool(self.queue)
+        return bool(self.messages)
+        # return self.clock.currentTick() >= self.clock.clockEdge()
+
+    def send_message(self, message):  # enque
+        self.messages.append(message)
+
+    # def receive_message(self):
+    def dequeue(self):
+        return self.messages.popleft() if self.messages else None
+
+    def is_empty(self):
+        return len(self.messages) == 0
+
+    def peek(self):  # check the head point value of queue
+        return self.messages[0] if self.messages else None
+
+    def print_all_messages(self):
+        if self.is_empty():
+            print("VC is empty")
+        print("==========================")
+        for msg in self.messages:
+            print("VC CONTENTS")
+            print(msg)  # This will invoke __str__ method of Message object
+        print(f"transaction_ongoing: {self.transaction_ongoing}")
+        print("==========================")
+
+
 # transaction buffer entry
 class tbe:
     def __init__(self, state, data_block, acks_outstanding):
@@ -154,82 +195,59 @@ class CacheEntry:
         return f"Addr: {hex(self.address)}, State: {self.state}, isValid: {self.isValid}, data_block: {self.data_block}"
 
 
-class Cache: #currently assumes fully-associative
+class Cache:
     def __init__(self, size):
         # collection of cache entry
         # dictionary with key: ADDR / value : CacheEntry
         self.size = size
-        self.entries = {i * 0x40: CacheEntry(i * 0x40) for i in range(size)}  # Assume each address is aligned to 64 bytes (0x40)
-        self.current_max_LRU = 0  # Track the highest LRU value
+        self.set_size = 2  # set size, change if wanted
+        self.set_entries = int(self.size / self.set_size)
+        self.entries = [{} for _ in range(self.set_entries)]  # Assume each address is aligned to 64 bytes (0x40)
+        self.usage_order = [deque() for _ in range(self.set_entries)]
+        self.set_mask = (1 << int(math.log(self.set_size, 2))) - 1
+        self.tag_mask = ~(self.set_mask | 0x3F)
 
     def get_entry(self, address):
-        base_address = address & ~0x3F
-        return self.entries.get(base_address)
-
-    # def set_entry(self, cache_entry):
-    #     base_address = cache_entry.address & ~0x3F  # Ensure the address is aligned
-    #     if base_address in self.entries:
-    #         print("Cahce Line exists, rewriting")
-    #         # check for cache write access
-    #         # State.M?
-    #         self.entries[base_address] = cache_entry
-    #         self.setMRU(cache_entry)
-    #     else:
-    #         # Add the new cache entry if it does not exist
-    #         self.entries[base_address] = cache_entry
-    #         self.setMRU(cache_entry)
+        base_address = address & self.tag_mask
+        set_num = (address >> 6) & self.set_mask
+        return self.entries[set_num].get(base_address)
 
     def set_entry(self, cache_entry):
-        base_address = cache_entry.address & ~0x3F  # Ensure the address is aligned
-        if self.is_cache_available() and base_address not in self.entries:
+        base_address = cache_entry.address & self.tag_mask  # Ensure the address is aligned
+        set_num = (cache_entry.address >> 6) & self.set_mask  # Ensure the address is aligned
+        if not self.is_cache_available(set_num) and base_address not in self.entries[set_num]:
             # Cache is full and the address is not in the cache, we need to evict an entry
-            self.evict_cache_entry()
-        self.entries[base_address] = cache_entry
-        self.setMRU(cache_entry)
-        print(f"Cache entry at {hex(base_address)} has been set or updated.")
+            self.evict_cache_entry(set_num)
+        if base_address in self.entries[set_num]:
+            self.usage_order[set_num].remove(base_address)
+        self.usage_order[set_num].append(base_address)
+        self.entries[set_num][base_address] = cache_entry
+        print(f"Cache entry in set {set_num} with tag {hex(cache_entry.address)} has been set or updated.")
 
     def invalidate(self, address):
-        base_address = address & ~0x3F
-        if base_address in self.entries:
-            self.entries[base_address].state = 'I'
-            self.entries[base_address].isValid = False
-            print(f"Invalidated Cache Line: {self.entries[base_address]}")
+        base_address = address & self.tag_mask
+        set_num = (address >> 6) & self.set_mask
+        if base_address in self.entries[set_num]:
+            del self.entries[set_num][base_address]
+            self.usage_order[set_num].remove(base_address)
+            print(f"Invalidated Cache Line in set {set_num}: {self.entries[set_num][base_address]}")
 
-    def is_cache_available(self):
-        # Check if any cache entry is available (i.e., invalid or not in use)
-        for entry in self.entries.values():
-            if not entry.isValid:
-                return True  # Found an available cache line
-        return False  # No available cache line, all are valid and in use
-    # def is_cache_available(self):
-    #     return len(self.entries) < self.size
+    def is_cache_available(self, set):
+        return len(self.entries[set]) < self.set_size
 
-    def evict_cache_entry(self):
+    def evict_cache_entry(self, set):
         # Evict the least recently used cache entry
-        lru_address = self.getReplacementAddr()
-        if lru_address:
-            evicted_entry = self.entries.pop(lru_address)
-            print(f"Evicted Cache Line: {hex(evicted_entry.address)} with state {evicted_entry.state}")
-
-
-    def setMRU(self, cache_entry):
-            self.current_max_LRU += 1
-            cache_entry.LRU = self.current_max_LRU  # Update the LRU to the highest current value, marking it most recently used
-
-    def getReplacementAddr(self):
-        # return replacement address
-        # currently just randomly select and return an address from the cache
         if self.entries:
-            return random.choice(list(self.entries.keys()))  
-        else:
-            return None  
+            evicted_entry = self.entries[set].pop(self.usage_order[set].popleft())
+            print(f"Evicted Cache Line in set {set}: {hex(evicted_entry.address)} with state {evicted_entry.state}")
 
     def print_contents(self):
         # Print each entry's details
         print("=========================")
         print("Printing each cache entry")
-        for entry in self.entries.values():
-            print(entry)
+        for i in range(self.set_entries):
+            for entry in self.entries[i].values():
+                print(entry)
         print("=========================")
 
 class MemRequest:
@@ -693,26 +711,3 @@ class CacheController:
                 print("Transition to I state: PutAck received.")
                 self.deallocateCacheBlock(addr)
                 self.popForwardQueue()
-
-
-    def receive_rep_msg(self, rep_queue) : #enqueue rep_queue
-        if is self.channels['response_out'].is_empty():
-            return None
-        else:
-            if rep_queue.is_full():
-                return None
-            else: 
-                rep_queue.enqueue(channels['response_out'][0])
-                return channels['response_out'].dequeue()
-        
-
-    def get_generated_msg(self) : #peek req_queue
-        self.channels['request_out'].peek()
-
-    def take_generated_msg(self, ) : #pop req_queue
-        self.channels['request_out'].dequeue()
-
-    #def get_request_msg() :
-
-
-
