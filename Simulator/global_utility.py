@@ -46,6 +46,20 @@ class msg_type(Enum):
     Load = auto()
     Store = auto()
     Barrier = auto()
+    
+    # CPU message type
+    GetS = auto()
+    GetM = auto()
+    PutM = auto()
+    FwdGetS = auto()
+    FwdGetM = auto()
+    DataDir = auto() # data from LLC
+    DataOwner = auto() # data from Owner
+    Data = auto() # data from cpu to LLC
+    
+    ## temp state used in translation map, not any actual state in protocol
+    Data_V = auto() # represent LLC should receieve RepFwdV instead of RepRvkO
+    DataOwner_V = auto() # represent LLC should receieve RepFwdV_E instead of RepRvkO
 
 
 class type(Enum):
