@@ -65,16 +65,28 @@ class Event(Enum):
 
 
 class MessageType(Enum):
+    # Request Messages
     GetS = auto()
     GetM = auto()
     PutS = auto()
     PutM = auto()
+
+    # Fwd Messages
+    FwdGetS = auto()
+    FwdGetM = auto()
     Inv = auto()
     PutAck = auto()
+
+    # Response Messages
     Data = auto()
-    InvAck = auto()
+    InvAck = auto() 
+
+    # Instruction Message
     LD = auto()
     ST = auto()
+
+    # just for parsing
+    Barrier = auto()
 
 
 # # Memory Operation from Memory Trace
