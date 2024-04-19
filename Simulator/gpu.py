@@ -196,7 +196,7 @@ class GPU_Controller:
     def get_generated_msg(self):
         return self.generated_msg
     
-    def taken_generated_msg(self):
+    def take_generated_msg(self):
         self.generated_msg = None
         
     # receiece barrier info from top, call one time if One Node send a barrier before GPU execution in the same cycle

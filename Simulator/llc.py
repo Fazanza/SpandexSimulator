@@ -876,7 +876,7 @@ class LLC_Controller:
         else:
             return self.generated_msg_queue.peek()
         
-    def take_genearted_msg(self):
+    def take_generated_msg(self):
         assert self.generated_msg_queue.is_empty() == False, "Error! Can not take instruction out from LLC generated msg queue"
         self.generated_msg_queue.dequeue()
     
