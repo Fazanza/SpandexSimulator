@@ -73,7 +73,7 @@ class type(Enum):
 
 
 class Msg:
-    def __init__(self, msg_type, addr, src, dst, ack_cnt, fwd_dst, target_addr = None):
+    def __init__(self, msg_type, addr, src, dst, ack_cnt = 0, fwd_dst = None, target_addr = None):
         self.msg_type = msg_type
         self.addr = addr
         self.src = src
@@ -153,3 +153,10 @@ class Map:
             print(f"Changed Key: {key} to new Value: {value}")
         else:
             print(f"Error: Key '{key}' not found. No value changed.")
+    
+    def print_Map(self, key = None):
+        if key != None:
+            print(f"{key} : {self.map[key]}")
+        else:
+            for key in self.map:
+                print(f"{key} : {self.map[key]}")

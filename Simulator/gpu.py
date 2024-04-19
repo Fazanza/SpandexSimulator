@@ -41,16 +41,18 @@ class GPU_Controller:
                     inst_type = Inst_type.Barrier
                     barrier_name = int(elements[1])
                     inst = Inst(inst_type, 0, barrier_name)
-                    self.barrier_map.inst(barrier_name, int(elements[2]))
+                    assert int(elements[2]) > 1, "Error! Barrier number is less than 2"
+                    self.barrier_map.insert(barrier_name, int(elements[2]))
                 else:
                     print("There is undefine instruction type")
-                self.barrier_map.enqueue(inst)
+                self.inst_buffer.enqueue(inst)
     
     def get_new_rep(self):
         if self.rep_msg_box.is_empty():
+            print("GPU rep box empty")
             return None
         else:
-            msg = self.rep_msg_box.dequeue(self)
+            msg = self.rep_msg_box.dequeue()
             return msg
         
     # get new instruction from instruction buffer
@@ -77,7 +79,7 @@ class GPU_Controller:
         if self.cache.addNewLine(addr) == True:
             return True
         else: # should evict the cache line
-            evict_addr, evict_line_state, evict_word_state, evict_sharer, evict_owner= self.cache.getLRU(addr)
+            evict_addr, evict_line_state, evict_word_state = self.cache.getLRU(addr)
             if self.is_inst_qualified(evict_addr):
                 self.cache.updateState_line_word(addr, State.I)
                 self.cache.addNewLine(addr)
@@ -88,7 +90,7 @@ class GPU_Controller:
         
     def do_transition(self, current_state, input_msg):
         msg_addr = input_msg.addr
-        self.generated_msg = None
+        # self.generated_msg = None
         ###########################
         if current_state == State.I:
             if self.cache_add_newline(msg_addr) == False: # can not add the new line into GPU
@@ -203,13 +205,14 @@ class GPU_Controller:
     def update_barrier(self, barrier_name):
         if barrier_name != None:
             barrier_num = self.barrier_map.search(barrier_name)
+            print(barrier_num)
             self.barrier_map.change(barrier_name, barrier_num-1)
         # get the barrier_num for current barrier which GPU stop at
-        current_barrier_num = self.barrier_map.search(self.barrier_name)
-        if current_barrier_num != None:
-            if current_barrier_num == 0:
-                self.wait = False
-    
+        # current_barrier_num = self.barrier_map.search(self.barrier_name)
+        # if current_barrier_num != None:
+        #     if current_barrier_num == 0:
+        #         self.wait = False
+                
     def get_barrier(self):
         temp = self.barrier_name_observed
         self.barrier_name_observed = None
@@ -219,14 +222,15 @@ class GPU_Controller:
         return self.finish
 
     def GPU_run(self):
+        print()
+        print(f"#################### GPU Run at Clk Cnt {self.clk_cnt} ####################")
         # First execute response
         rep_msg = self.get_new_rep()
         self.current_rep_msg = rep_msg
         if rep_msg != None:
             current_state = self.get_current_state(rep_msg)
             result = self.do_transition(current_state, rep_msg)
-            if result == type.Error:
-                print("Error when GPU receieve response")
+            assert result != type.Error, "Error! GPU wrong when take rep msg"
             self.cache.renewAccess(rep_msg.addr)
         
         # Second execute an instruction
@@ -234,11 +238,19 @@ class GPU_Controller:
         # 2. wait for LLC message queue available
         if self.wait == True:
             if self.current_inst.inst_type == Inst_type.Barrier: # should not continue
+                assert self.generated_msg == None, "Error! GPU should not generate msg when executing Barrier instruction"
+                current_barrier_num = self.barrier_map.search(self.barrier_name)
+                if current_barrier_num == 0: # mean this barrier is resolved, will execute next instruction in next cycle
+                    self.wait = False
+                    self.cache.clear()
                 return 0
-            else:
-                self.wait == False # retry
+            elif self.current_inst.inst_type == Inst_type.Load or self.current_inst.inst_type == Inst_type.Store:
+                if self.generated_msg != None: # The GPU wait because LLC do not have enough space for accepting more request
+                    return 0
+                else: # GPU wait because Last instruction has been blocked because there is existing request on that addr, should retry
+                    self.wait = False
         
-        assert self.generated_msg == None, "Error! GPU generate new message when execute response"
+        # assert self.generated_msg == None, "Error! GPU generate new message when execute response"
 
         inst = self.get_new_inst()
         if inst == None:
@@ -282,30 +294,32 @@ class GPU_Controller:
                 assert self.wait == False, "Error! GPU is waiting after a Success Store"
             
         elif inst.inst_type == Inst_type.Barrier:
+            print("BARRIER UPDATE")
             self.update_barrier(inst.barrier_name)
             if self.barrier_map.search(inst.barrier_name) != 0:
                 self.barrier_name = inst.barrier_name
                 self.barrier_name_observed = inst.barrier_name
                 self.wait = True
-            else:
-                assert self.barrier_name == Node and self.barrier_name_observed == None, "Error, GPU has wrong barrier output"
+            else: # this barrier instruction has already be poped by update_barrier()
+                # assert self.barrier_name == Node and self.barrier_name_observed == None, "Error, GPU has wrong barrier output"
+                assert self.generated_msg == None, "Error! GPU barrier will not generated a msg"
                 self.wait  = False
-                self.inst_buffer.dequeue()
                 self.cache.clear() # self invalidation after pass barrier
             assert self.generated_msg == None, "Error! GPU has generated msg when execute Barrier instruction"
             return 0
 
 
-    ## this function should take the response from Top, have to follow GPU_RUN(), after update_barrier
+    ## this function should take the response from Top, have to follow GPU_RUN() and have already taken generated msg
     #  whether the previous generated msg can be taken by LLC
     def GPU_POST_RUN(self):
         # if instruction will not generate any msg, like read hit, shoud continue
         # if instruction is blocked, it can not generate msg, and will set self.wait = True during transaction
+        # if self.wait == True:
+        #     assert self.generated_msg == None, "Error! GPU wait for inter reason should not generate msg"
         if self.generated_msg == None and self.wait == False:
-            self.inst_buffer.dequeue()
+                self.inst_buffer.dequeue()
         if self.generated_msg != None and self.wait == False:
             self.wait = True
-        self.generated_msg = None # reset generated_msg; if generated_msg is not taken, should be reset and regenerated for retry
         self.clk_cnt = self.clk_cnt + 1
 
 

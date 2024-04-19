@@ -85,7 +85,7 @@ class System:
             req_msg_taken = self.Device_Map.search(Node.LLC).receieve_req_msg # check if LLC req_msg_box has enough space to enqueue
             if req_msg_taken == True:
                 GPU.take_generated_msg()
-            GPU.GPU_POST_RUN()
+        GPU.GPU_POST_RUN()
     
     def CPU_RUN(self, CPU_Node):
         CPU = self.Device_Map.search(CPU_Node)
@@ -93,8 +93,8 @@ class System:
         # do barrier
         CPU_barrier = CPU.get_barrier()
         if CPU_barrier != None:
-            for GPU in self.GPU_List:
-                self.Device_Map.search(GPU).update_barrier(CPU_barrier)
+            for GPUs in self.GPU_List:
+                self.Device_Map.search(GPUs).update_barrier(CPU_barrier)
             for CPUs in self.CPU_List:
                 if self.Device_Map.search(CPUs) != CPU:
                     self.Device_Map.search(CPUs).update_barrier(CPU_barrier)

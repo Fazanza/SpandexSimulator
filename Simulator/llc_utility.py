@@ -97,7 +97,7 @@ class dir_cache:
         self.words_state = [[[State.I for i in range(self.line_size)] for j in range(self.ways)] for k in range(self.total_sets)]
         self.owner = [[Node.MEM for j in range(self.ways)] for k in range(self.total_sets)]
         self.sharer = [[[] for j in range(self.ways)] for k in range(self.total_sets)]
-        self.line_tag = [[0 for j in range(self.ways)] for k in range(self.total_sets)]
+        self.line_tag = [[-1 for j in range(self.ways)] for k in range(self.total_sets)]
         self.msg_dst= [[Node.NULL for j in range(self.ways)] for k in range(self.total_sets)]
     ## Separate address into tag, index and offset
     def parseAddr(self, addr):
@@ -296,5 +296,5 @@ class dir_cache:
     def getLRU(self, addr):
         tag, index, offset = self.parseAddr(addr)
         LRUtag = self.line_tag[index][self.ways-1]
-        LRUaddr = LRUtag * self.total_sets * self.line_size - index * self.line_size
+        LRUaddr = LRUtag * self.total_sets * self.line_size + index * self.line_size + offset
         return LRUaddr, self.line_state[index][self.ways-1], self.words_state[index][self.ways-1][:], self.words_state[index][self.ways-1][:], self.owner[index][self.ways-1]

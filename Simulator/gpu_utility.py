@@ -37,7 +37,7 @@ class GPU_cache:
         self.tag_bits = self.addr_bits - self.index_bits - self.offset_bits
         self.line_state = [[State.I for j in range(self.ways)] for k in range(self.total_sets)]
         self.words_state = [[[State.I for i in range(self.line_size)] for j in range(self.ways)] for k in range(self.total_sets)]
-        self.line_tag = [[0 for j in range(self.ways)] for k in range(self.total_sets)]
+        self.line_tag = [[-1 for j in range(self.ways)] for k in range(self.total_sets)]
 
     ## Separate address into tag, index and offset
     def parseAddr(self, addr):
@@ -84,7 +84,7 @@ class GPU_cache:
             return State.I
         else:
             ##updateAccesing
-            return self.words_state[index][match_way]
+            return self.line_state[index][match_way]
 
      ## Only use when making sure the address is in cache
     def updateState_word(self, addr, new_state):
@@ -164,7 +164,7 @@ class GPU_cache:
     def getLRU(self, addr):
         tag, index, offset = self.parseAddr(addr)
         LRUtag = self.line_tag[index][self.ways-1]
-        LRUaddr = LRUtag * self.total_sets * self.line_size - index * self.line_size
+        LRUaddr = LRUtag * self.total_sets * self.line_size + index * self.line_size + offset
         return LRUaddr, self.line_state[index][self.ways-1], self.words_state[index][self.ways-1][:]
     
     def clear(self):
