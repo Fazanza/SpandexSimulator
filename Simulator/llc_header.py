@@ -22,30 +22,30 @@ class State(Enum):
     I_I_O = auto() # invalid
     I_I_VI = auto() # invalid
 
-class llc_msg_type(Enum):
-    # Snoop Req from another node ()
-    ReqV = auto()
-    ReqS = auto()
-    ReqWT = auto()
-    ReqOdata = auto()
-    ReqWB = auto()
-    ## ReqWTdata = auto()
+# class llc_msg_type(Enum):
+#     # Snoop Req from another node ()
+#     ReqV = auto()
+#     ReqS = auto()
+#     ReqWT = auto()
+#     ReqOdata = auto()
+#     ReqWB = auto()
+#     ## ReqWTdata = auto()
     
-    # Snoop response from another node
-    InvAck = auto()
-    RepRvkO = auto()
-    MemRep = auto()
+#     # Snoop response from another node
+#     InvAck = auto()
+#     RepRvkO = auto()
+#     RepFwdV = auto()
+#     MemRep = auto()
     
-    # Req send from LLC
-    MemReq = auto()
-    RepS = auto()
-    RepV = auto()
-    RepWT = auto()
-    RepWB = auto()
-    RepOdata = auto()
-    FwdReqS = auto()
-    FwdReqV = auto()
-    FwdReqO = auto()
-    FwdReqOdata = auto()
-    FwdRvkO = auto()
-    Inv = auto()
+#     # Req send from LLC
+#     MemReq = auto()
+#     RepS = auto()
+#     RepV = auto()
+#     RepWT = auto()
+#     RepWB = auto()
+#     RepOdata = auto()
+#     FwdReqS = auto()
+#     FwdReqV = auto()
+#     FwdReqOdata = auto()
+#     FwdRvkO = auto()
+#     Inv = auto()

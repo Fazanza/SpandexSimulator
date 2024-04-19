@@ -8,8 +8,14 @@ from global_utility import *
 
 class req_msg:
     def __init__(self, msg_type, addr, src, dst, ack_cnt, fwd_dst, time_stamp):
-        self.msg = msg(msg_type, addr, src, dst, ack_cnt, fwd_dst)
+        self.msg = Msg(msg_type, addr, src, dst, ack_cnt, fwd_dst)
         self.time_stamp = time_stamp
+    
+    def print_msg(self):
+            if self == None:
+                print(None)
+            else:
+                print(f"msg_type: {self.msg.msg_type}, addr: {self.msg.addr}, time_stamp: {self.time_stamp}, src: {self.msg.src}, dst: {self.msg.dst}, fwd_dst: {self.msg.fwd_dst}, ack_cnt: {self.msg.ack_cnt}")
 
 class MessageBuffer:
     def __init__(self, max_size):
@@ -31,7 +37,7 @@ class MessageBuffer:
         return self.buffer
     
     def is_full(self):
-        if len(self.buffer) < self.max_size:
+        if len(self.buffer) >= self.max_size:
             return True
         else:
             return False
@@ -50,6 +56,11 @@ class MessageBuffer:
 
     def size(self):
         return len(self.buffer)
+
+    def print_all(self):
+        print("Request message box")
+        for item in self.buffer:
+            item.print_msg()
 
 
 class dir_cache:
@@ -86,7 +97,7 @@ class dir_cache:
         self.words_state = [[[State.I for i in range(self.line_size)] for j in range(self.ways)] for k in range(self.total_sets)]
         self.owner = [[Node.MEM for j in range(self.ways)] for k in range(self.total_sets)]
         self.sharer = [[[] for j in range(self.ways)] for k in range(self.total_sets)]
-        self.line_tag = [[0 for j in range(self.ways)] for k in range(self.total_sets)]
+        self.line_tag = [[-1 for j in range(self.ways)] for k in range(self.total_sets)]
         self.msg_dst= [[Node.NULL for j in range(self.ways)] for k in range(self.total_sets)]
     ## Separate address into tag, index and offset
     def parseAddr(self, addr):
@@ -114,6 +125,16 @@ class dir_cache:
         else:
             ##updateAccesing
             return self.words_state[index][match_way][offset]
+    
+    def getState_allword(self, addr):
+        tag, index, offset = self.parseAddr(addr)
+        match_way = self.searchSet(index, tag)
+        # miss
+        if (match_way == -1):
+            return State.I
+        else:
+            ##updateAccesing
+            return self.words_state[index][match_way]
 
     def getState_line(self, addr):
         tag, index, offset = self.parseAddr(addr)
@@ -123,7 +144,7 @@ class dir_cache:
             return State.I
         else:
             ##updateAccesing
-            return self.words_state[index][match_way]
+            return self.line_state[index][match_way]
 
     ## Only use when making sure the address is in cache
     def updateState_word(self, addr, new_state):
@@ -172,8 +193,8 @@ class dir_cache:
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
         if (match_way == -1):
-            print("Error! line miss in cache during getting owner")
-            quit()
+            #print("Error! line miss in cache during getting owner")
+            return Node.MEM
         else:
             return self.owner[index][match_way]
         
@@ -206,7 +227,7 @@ class dir_cache:
         for i in range(self.ways):
             line_occupied = False
             for j in range(self.line_size):
-                if(self.words_state[index][i][j] != State.I):
+                if(self.words_state[index][i][j] != State.I or self.line_state[index][i] != State.I):
                     line_occupied = True
                     break
             if not line_occupied:
@@ -224,7 +245,6 @@ class dir_cache:
         match_way = self.searchSet(index, tag)
         if match_way == -1:
             print("Error! line miss in cache during clear sharer")
-            quit()
         else:
             self.sharer[index][match_way] = []
 
@@ -242,7 +262,6 @@ class dir_cache:
         match_way = self.searchSet(index, tag)
         if match_way == -1:
             print("Error! line miss in cache during clear sharer")
-            quit()
         else:
             return self.sharer[index][match_way]
 
@@ -277,5 +296,5 @@ class dir_cache:
     def getLRU(self, addr):
         tag, index, offset = self.parseAddr(addr)
         LRUtag = self.line_tag[index][self.ways-1]
-        LRUaddr = LRUtag * self.total_sets * self.line_size - index * self.line_size
-        return LRUaddr, self.line_state[index][self.ways-1], self.words_state[index][self.ways-1][:], self.words_state[index][self.ways-1][:], self.sharer[index][self.ways-1][:], self.owner[index][self.ways-1]
+        LRUaddr = LRUtag * self.total_sets * self.line_size + index * self.line_size + offset
+        return LRUaddr, self.line_state[index][self.ways-1], self.words_state[index][self.ways-1][:], self.words_state[index][self.ways-1][:], self.owner[index][self.ways-1]

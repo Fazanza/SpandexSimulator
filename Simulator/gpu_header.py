@@ -6,6 +6,7 @@ class State(Enum):
     IV = auto()
     VI = auto()
     WTV = auto()
+    WTV_L = auto()
 
 class Inst_type(Enum):
     Load = auto()
@@ -17,6 +18,12 @@ class Inst():
         self.inst_type = inst_type
         self.addr = addr
         self.barrier_name = barrier_name # name for barrier
+    
+    def print_Inst(self):
+        if self == None:
+            print(None)
+        else:
+            print(f"inst_type: {self.inst_type}, addr: {self.addr}, barrier_name: {self.barrier_name}")
 
 class gpu_msg_type(Enum):
     # req send to LLC
