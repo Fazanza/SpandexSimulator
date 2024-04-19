@@ -4,33 +4,28 @@ from collections import deque
 # from cpu_message import MessageType, Message
 from global_utility import Msg as Message
 from global_utility import msg_type as MessageType
+from global_utility import *
 import os
 
 class Parser:
 
-
-
-    # not used - handle in cache_ctrl
-    def parse_device_type(device_str):
+    # assume 3 CPU limit
+    def parse_device_type(self, deviceID):
         device_mapping = {
-            'cpu_0': Node.CPU0,
-            'cpu_1': Node.CPU1,
-            'cpu_2': Node.CPU2,
-            'cpu_3': Node.CPU3,
-            'gpu': Node.GPU,
-            'mem': Node.MEM,
-            'llc': Node.LLC,
-            'null': Node.NULL
+            Node.CPU0: 'cpu_0' ,
+            Node.CPU1: 'cpu_1' ,
+            Node.CPU2: 'cpu_2' ,
+            Node.CPU3: 'cpu_3' 
         }
         device_str = device_str.lower().replace(' ', '')
         if device_str in device_mapping:
-            return device_mapping[device_str]
+            return device_mapping[deviceID]
         else:
             raise ValueError(f"Unknown device type: {device_str}")
 
     # Read 1 Trace Line and 
     # Return Corresponding Messages
-    def parse_trace_line(self, line):
+    def parse_trace_line(self, line, barriers):
         # print(line)
         parts = line.split()
         if not parts:
@@ -48,16 +43,17 @@ class Parser:
             # device_type = parse_device_type(parts[2])
             #cpu_id = parts[2]
             #return self.MemoryRequest(MessageType.LD if operation == 'ld' else MessageType.ST, address)
-            return Message(mtype = MessageType.LD if operation == 'ld' else MessageType.ST, addr = address)
+            return Message(msg_type = MessageType.Load if operation == 'ld' else MessageType.Store, addr = address)
         # Barrier
         elif operation.startswith('Barrier'):
             if len(parts) < 3:
                 raise ValueError("Insufficient arguments for BARRIER.")
             barrier_id = parts[1] # barrier ID
             barrier_count = int(parts[2]) # barrier count
+            barriers[barrier_id] = barrier_count
             print(f"barrierid: {barrier_id}, barreir_count{barrier_count}")
             #return self.MemoryRequest(MessageType.Barrier, barrier_count, Node.NULL)
-            return Message(mtype = MessageType.Barrier, barrierID = barrier_id, barrierCnt = barrier_count)
+            return Message(msg_type = MessageType.Barrier)
 
         else:
             raise ValueError(f"Unsupported operation: {operation}")
@@ -65,9 +61,9 @@ class Parser:
 
     # Read the memory trace file
     # and enqueue to the buffer
-    def process_trace_file(self, buffer):
+    def process_trace_file(self, buffer, deviceID, barriers):
         
-        filepath = self.get_file_path()
+        filepath = self.get_file_path(deviceID)
         
         with open(filepath, 'r') as file:
             lines = file.readlines()
@@ -78,7 +74,7 @@ class Parser:
             if i >= len(lines):
                 break
             try:
-                request = self.parse_trace_line(lines[i].strip()) # remove whitespace
+                request = self.parse_trace_line(lines[i].strip(), barriers) # remove whitespace
                 # currently assume buffer is unlimited for instrution queue
                 # if not buffer.send_message(request): # If the buffer is full 
                 #     break
@@ -90,9 +86,10 @@ class Parser:
 
         print(i)
     
-    def get_file_path(self):
+    def get_file_path(self, deviceID):
         # need to file_name for device - given from cache controller Device Type
-        file_name = 'memory_trace_toy.txt'
+        file_name = self.parse_device_type(deviceID)
+        # file_name = 'memory_trace_toy.txt'
 
         # get file path
         src_directory = os.getcwd()

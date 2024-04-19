@@ -1,11 +1,14 @@
 from enum import Enum, auto
-import random
 from collections import deque
+import random
 import time
+import math
+
 from global_utility import Msg as Message
 from global_utility import msg_type as MessageType
 from global_utility import *
 from parser import Parser
+
 
 # Virtual Channel
 # Message Buffer
@@ -41,7 +44,8 @@ class VirtualChannel:
         print("==========================")    
         for msg in self.messages:
             print("VC CONTENTS")
-            print(msg)  # This will invoke __str__ method of Message object
+            #print(msg)  # This will invoke __str__ method of Message object
+            Message.print_msg(msg)
         print(f"transaction_ongoing: {self.transaction_ongoing}")    
         print("==========================")
 
@@ -130,15 +134,16 @@ class tbeTable:
 ## below is configruable
 ## same as cache.py
 class CacheEntry:
-    def __init__(self, address, state='I', isValid=False, isDirty=False, data_block=None):
+    def __init__(self, address, state='I', isValid=False, isDirty=False, data_block=[]):
         # cache line metadata
         self.address = address & ~0x3F  # base address for the cache line --> Mask out the lower 6 bits for 64-byte alignment. given as hex value ex) 0x211
         self.state = state  # Cache line state for coherency
         self.isValid = isValid
         self.isDirty = isDirty
-        self.data_block = data_block if data_block else [None] * 16  
-        #data_block --> [byte1.. byte16] # list of 16byes (currently fixed to 64 bytes per line size but can be configurable)
-        self.LRU = 0 # will update later
+        # data_block --> [byte1.. byte16] # list of 16byes (currently fixed to 64 bytes per line size but can be configurable)
+        data_block.extend([None] * (16 - len(data_block)))
+        self.data_block = data_block
+        self.LRU = -1  # will update later
         # self.accesslvl # read-only? write-only?
 
         # word granularity
@@ -225,9 +230,20 @@ class CacheController:
             'response_out'  : VirtualChannel(),
             'request_out'   : VirtualChannel()
         }
-        self.data_block = None
         self.acks_outstanding = 0
 
+        # Barrier Data
+        # key           value
+        # barrier id : barrer count
+        self.barriers = {}
+
+
+## EXEUTE MEMORY 
+    # config cache
+    # parse memory trace
+    def setCPU(self):
+        parser = Parser()
+        parser.process_trace_file(self.channels['instruction_in'], self.deviceID, self.barriers)
         
     def runCPU(self):
         # Initialize a flag to check if all channels are busy
@@ -236,8 +252,6 @@ class CacheController:
         # Insturction Queue should be filled
         # Parse the memory trace file
         # And fill up the instruction queue
-        parser = Parser()
-        parser.process_trace_file(self.channels['instruction_in'], self.deviceID)
 
         # List all channels in order of priority
         channels = ['response_in', 'forward_in', 'instruction_in']
@@ -645,27 +659,53 @@ class CacheController:
                 self.deallocateCacheBlock(addr)
                 self.popForwardQueue()
 
+## BARRIER HANDLING
+    def print_barriers(self):
+        # Prints all barriers and their counts
+        if not self.barriers:
+            print("No barriers to display.")
+            return
+        print(f"=={self.deviceID} Current bBarriers and Their Counts==")
+        for barrier_id, count in self.barriers.items():
+            print(f"Barrier ID: {barrier_id}, Count: {count}")
 
-    def receive_rep_msg(self, rep_queue) : #enqueue rep_queue
-    #self.channels['response_out'] --> refer to VC
-        if is self.channels['response_out'].is_empty():
+
+
+## OUTPUT INTERFACE
+    # returns response message and dequeues it from reponse queue
+
+    def receive_resp_msg(self) : 
+        response_channel = self.channels['response_out']
+        if response_channel.is_empty():
             return None
         else:
-            if rep_queue.is_full():
-                return None
-            else: 
-                rep_queue.enqueue(channels['response_out'][0])
-                return channels['response_out'].dequeue()
+            # we assume stalling is handled in the top level
+            # if rep_queue.is_full():
+            #     return None
+            # else: 
+            message = response_channel.dequeue()
+            # we assume LLC response input queue enqueing is handled seperately
+            # rep_queue.enqueue(channels['response_out'][0])
+            return message
         
 
     def get_generated_msg(self) : #peek req_queue
-     #self.channels['request_out'] --> refer to VC
-        self.channels['request_out'].peek()
+        request_channel = self.channels['request_out']
+        if request_channel.is_empty():
+            return None
+        else:
+            return request_channel.peek()
 
-    def take_generated_msg(self, ) : #pop req_queue
-        self.channels['request_out'].dequeue()
+    def take_generated_msg(self) : #pop req_queue
+        request_channel = self.channels['request_out']
+        if request_channel.is_empty():
+            return None
+        else:
+            else: 
+                message = request_channel.dequeue()
+                return message
 
-    #def get_request_msg() :
+
 
 
 

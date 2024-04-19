@@ -74,6 +74,9 @@ class TestCacheSystem(unittest.TestCase):
 
         cache.print_contents()  # Print initial state
 
+        #cache.set_entry(0x1, State.S, True, True, [0x01, 0x02, 0x03, 0x04])
+        #cache.set_entry(0x300, State.S, True, False, [0x05, 0x06, 0x07, 0x08])
+
     # def enqueue_memory_trace():
     #     self.setup = setUp()
     #     msg = Message(MessageType.LD, "0x1A", "Node1", "Node2", "100")
@@ -87,81 +90,57 @@ class TestCacheSystem(unittest.TestCase):
         for i in range(100):
             clock.clockEdge()
 
-        # Cache Test
-        # Example of creating and using the Cache
-        cache_size = 10  # Define the size of the cache
-        cache = Cache(cache_size)
-        # Set some entries
-        #cache.set_entry(0x1, State.S, True, True, [0x01, 0x02, 0x03, 0x04])
-        #cache.set_entry(0x300, State.S, True, False, [0x05, 0x06, 0x07, 0x08])
-        # Print all cache contents
-        cache.print_contents()
+        # Instantiate CPU [L1]
+        cache_ctrl = CacheController(20)
 
-        #dut = proc_cache(cache_size=8, ways = 2, line_size = 2, memory = 16) 
+        # # queue 1 message each to all queues
+        # inv_ack_message = Message(
+        #     mtype=MessageType.InvAck,
+        #     addr=0x1A2B3C4D,
+        #     src=Node.CPU2,
+        #     dest=Node.CPU1,
+        #     ackCnt=1  # Acknowledgement count example
+        # )
 
+        # fwd_gets_message = Message(
+        #     mtype=MessageType.GetS,
+        #     addr=0x1A2B3C4D,
+        #     src=Node.CPU1,
+        #     dest=Node.CPU0,
+        #     fwd_dest=Node.CPU0  # Forward to CPU0
+        # )
 
-        # test 1
-        # Instantiate cache and queue
-
-        cache_ctrl = CacheController(cache, clock)
-
-
-        ld_msg = Message(MessageType.Load, 0x0, Node.CPU0, "Node2", [0x01, 0x02, 0x03, 0x04])
-        st_msg = Message(MessageType.Store, 0x0, Node.CPU0, "Node2", [0x01, 0x02, 0x03, 0x04])
-
-        for i in range(2):
-            cache_ctrl.channels['instruction_in'].send_message(ld_msg)
-            cache_ctrl.channels['instruction_in'].send_message(st_msg)
-            #cache_ctrl.channels['response_in'].send_message(msg)
-
-        # queue 1 message each to all queues
-        inv_ack_message = Message(
-            mtype=MessageType.InvAck,
-            addr=0x1A2B3C4D,
-            src=Node.CPU2,
-            dest=Node.CPU1,
-            ackCnt=1  # Acknowledgement count example
-        )
-
-        fwd_gets_message = Message(
-            mtype=MessageType.GetS,
-            addr=0x1A2B3C4D,
-            src=Node.CPU1,
-            dest=Node.CPU0,
-            fwd_dest=Node.CPU0  # Forward to CPU0
-        )
-
-        load_message = Message(
-            mtype=MessageType.LD,
-            addr=0x1A2B3C4D,
-            src=Node.NULL,
-            dest=Node.CPU0,
-            data_block=[0xDE, 0xAD, 0xBE, 0xEF]  # Example data block
-        )
+        # load_message = Message(
+        #     mtype=MessageType.LD,
+        #     addr=0x1A2B3C4D,
+        #     src=Node.NULL,
+        #     dest=Node.CPU0,
+        #     data_block=[0xDE, 0xAD, 0xBE, 0xEF]  # Example data block
+        # )
         #cache_ctrl.channels['response_in'].send_message(inv_ack_message)
         #cache_ctrl.channels['forward_in'].send_message(fwd_gets_message)
         #cache_ctrl.channels['instruction_in'].send_message(load_message)
 
-
-
+        cache_ctrl.setCPU()
         cache_ctrl.channels['instruction_in'].print_all_messages()
+        cache_ctrl.print_barriers()
         # cache_ctrl.handle_instruction()
         # cache_ctrl.handle_instruction()
         # cache_ctrl.handle_instruction()
         # print(cache_ctrl.channels['instruction_in'])
 
-        for _ in range(5):
-            clock.clockEdge()
-            cache_ctrl.runL1Controller()
-            # for debugging
-            cache_ctrl.channels['instruction_in'].print_all_messages()
+        # for _ in range(5):
+        #     clock.clockEdge()
+        #     cache_ctrl.runCPU()
+        #     # for debugging
+        #     cache_ctrl.channels['instruction_in'].print_all_messages()
 
-        cache_ctrl.popInstructionQueue()
-        for _ in range(5):
-            clock.clockEdge()
-            cache_ctrl.runL1Controller()
-            # for debugging
-            cache_ctrl.channels['instruction_in'].print_all_messages()
+        # cache_ctrl.popInstructionQueue()
+        # for _ in range(5):
+        #     clock.clockEdge()
+        #     cache_ctrl.runL1Controller()
+        #     # for debugging
+        #     cache_ctrl.channels['instruction_in'].print_all_messages()
 
     def test_tbe(self):
         # Instantiate tbeTable and add some test cases
@@ -207,12 +186,6 @@ class TestCacheSystem(unittest.TestCase):
     def test_mem_trace_parsing(self):
 
         # get file path
-        src_directory = os.getcwd()
-        parent_directory = os.path.dirname(src_directory)
-        memory_traces_directory = os.path.join(parent_directory, 'memory_traces')
-        file_path = os.path.join(memory_traces_directory, 'cpu_0.txt')
-        
-
 
         message_buffer = VirtualChannel()
         parser = Parser()
