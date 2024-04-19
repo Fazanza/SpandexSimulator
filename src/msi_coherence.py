@@ -17,7 +17,6 @@ class VirtualChannel:
         self.messages = deque()
         self.transaction_ongoing = False
 
-
     def __str__(self):
         return self.content
 
@@ -54,13 +53,11 @@ class State(Enum):
     I = auto()
 
     IS_D = auto()
-    IM_AD = auto()
-    IM_A = auto()
+    IM_D = auto()
 
     S = auto()
 
-    SM_AD = auto()
-    SM_A = auto()
+    SM_D = auto()
     
     M = auto()
 
@@ -83,26 +80,19 @@ class Event(Enum):
     PutAck = auto()
 
     # Responses from directory
-    DataDirNoAcks = auto()
-    DataDirAcks = auto()
+    DataDir = auto()
 
     # Responses from other caches
     DataOwner = auto()
-    InvAck = auto()
 
-    # Triggered after the last ack is received
-    LastInvAck = auto()
 
 # transaction buffer entry
 class tbe:
-    def __init__(self, state, data_block, acks_outstanding):
+    def __init__(self, state):
         self.state = state #state of cache line
-        self.data_block = data_block #data for cache line 
-        self.acks_outstanding = acks_outstanding #numer of acks left to receive
 
     def __repr__(self):
-        return (f"tr : State={self.state}, DataBlock={self.data_block}, "
-                f"AcksOutstanding={self.acks_outstanding}")
+        return (f"tr : State={self.state}")
 
 # transient request buffer
 # transaction buffer
@@ -116,10 +106,10 @@ class tbeTable:
         else:
             return self.entries.get(addr, None)
 
-    def allocate(self, addr, tbe):
+    def allocate(self, addr, cache_entry):
         # Allocate a new tbe entry for the given address. 
         if addr not in self.entries:
-            self.entries[addr] = tbe
+            self.entries[addr] = cache_entry
         return self.entries[addr]
 
     def deallocate(self, addr):
@@ -134,15 +124,15 @@ class tbeTable:
 ## below is configruable
 ## same as cache.py
 class CacheEntry:
-    def __init__(self, address, state='I', isValid=False, isDirty=False, data_block=[]):
+    def __init__(self, address, state=State.I, isValid=False, isDirty=False, data_block=None):
         # cache line metadata
         self.address = address & ~0x3F  # base address for the cache line --> Mask out the lower 6 bits for 64-byte alignment. given as hex value ex) 0x211
         self.state = state  # Cache line state for coherency
         self.isValid = isValid
         self.isDirty = isDirty
         # data_block --> [byte1.. byte16] # list of 16byes (currently fixed to 64 bytes per line size but can be configurable)
-        data_block.extend([None] * (16 - len(data_block)))
-        self.data_block = data_block
+        #data_block.extend([None] * (16 - len(data_block)))
+        self.data_block = data_block if data_block else [None] * 16  
         self.LRU = -1  # will update later
         # self.accesslvl # read-only? write-only?
 
@@ -231,12 +221,6 @@ class Cache: #currently assumes fully-associative
             print(entry)
         print("=========================")
 
-class MemRequest:
-    def __init__(self, line_address, request_type):
-        self.line_address = line_address
-        self.request_type = request_type  # 'Load', 'Store' 
-
-
 ## Cache Controller Model 
 ## --> Handles Coherence Protocol
 class CacheController:
@@ -248,7 +232,7 @@ class CacheController:
         self.tbes = tbeTable()
         self.channels = {
             'response_in'   : VirtualChannel(),
-            'forward_in'    : VirtualChannel(),
+            'request_in'    : VirtualChannel(),
             'instruction_in'  : VirtualChannel(),
             'response_out'  : VirtualChannel(),
             'request_out'   : VirtualChannel()
@@ -263,7 +247,7 @@ class CacheController:
         self.barrier_count = 0
 
 
-## EXEUTE MEMORY 
+## EXECUTE MEMORY 
     # config cache
     # parse memory trace
     def setCPU(self):
@@ -279,17 +263,17 @@ class CacheController:
         # And fill up the instruction queue
 
         # List all channels in order of priority
-        channels = ['response_in', 'forward_in', 'instruction_in']
+        channels = ['response_in', 'request_in', 'instruction_in']
         for channel_key in channels:
             channel = self.channels[channel_key]
             if not channel.is_empty():
-                if channel.transaction_ongoing:
-                    print(f"Transaction is currently ongoing in {channel_key}. Skipping.")
-                    continue  # Skip to the next channel
+                # if channel.transaction_ongoing:
+                #     print(f"Transaction is currently ongoing in {channel_key}. Skipping.")
+                #     continue  # Skip to the next channel
                 all_busy = False  # At least one channel is ready to be processed
                 if channel_key == 'response_in':
                     self.handle_responses()
-                elif channel_key == 'forward_in':
+                elif channel_key == 'request_in':
                     self.handle_forwards()
                 elif channel_key == 'instruction_in':
                     if self.encounter_barrier is not None:
@@ -318,29 +302,18 @@ class CacheController:
 
         # if response sender is directory
         if msg.src is self.dirID:
-            if msg.msg_type is not MessageType.Data:
+            if msg.msg_type is not MessageType.DataDir:
                 raise ValueError("Directory should only reply with data")
-            # if cache receives 'ack' from other caches before getting response from directory
-            if msg.AckCnt + tbe.acks_outstanding == 0:
-                self.trigger(Event.DataDirNoAcks, msg.addr, entry, msg)
-            else: # wait for more acks
-                self.trigger(Event.DataDirAcks, msg.addr, entry, msg)
-        
+                self.trigger(Event.DataDir, msg.addr, entry, msg)
         # if sender is another cache
         else:
-            if msg.msg_type is MessageType.Data:
+            if msg.msg_type is MessageType.DataOwner:
                 self.trigger(Event.DataOwner, msg.addr, entry, msg)
-            elif msg.msg_type is MessageType.InvAck:
-                print(f"Got inv ack. {tbe.acks_outstanding} left")
-                if tbe.acks_outstanding is 1:
-                    self.trigger(Event.LastInvAck, msg.addr, entry, msg)
-                else:
-                    self.trigger(Event.InvAck, msg.addr, entry, msg)
         # if no messages to process, go to next message queue to process
         # self.handle_forwards()
 
     def handle_forwards(self):
-        channel = self.channels['forward_in']
+        channel = self.channels['request_in']
         # Check the head of the queue
         msg = channel.peek()  
         channel.transaction_ongoing = True # set flag to indicate transaction is ongoing
@@ -364,7 +337,8 @@ class CacheController:
         channel = self.channels['instruction_in']
         # Check the head of the queue
         msg = channel.peek()
-        channel.transaction_ongoing = True # set flag to indicate transaction is ongoing
+        msg.print_msg()
+        # channel.transaction_ongoing = True # set flag to indicate transaction is ongoing
         
         # first check for barrier
         # BARRIER
@@ -378,15 +352,17 @@ class CacheController:
             barrier = self.barriers[0]
             barrier_id = next(iter(barrier)) 
             barrier_count = barrier[barrier_id]
+            print(f"running instruction : current barrier count= {barrier_count}, barrier count: {self.barrier_count}")
 
             if self.barrier_count==0: # first encounter barrier
                 self.encounter_barrier = barrier_id # set flag to notify LLC
                 self.barrier_count = barrier_count - 1 # exclude current running CPU
-            #else:
-                # get response from LLC
-                # if () : self.barrier_count -= 1
-                    # if 0 : pop        
-
+            elif barrier_count==0: #all CPU finish encountering barrier
+                self.barriers.popleft() #pop head
+                barrier_id = next(iter(barrier)) 
+                self.barrier_count = barrier[barrier_id]  #reset flag count
+                channel.dequeue() # dequeue instruction
+                channel.transaction_ongoing = False # go to next inst
             # in next tick we can still process resp_in 
             # but will have to wait until barrier is cleared
         
@@ -394,7 +370,7 @@ class CacheController:
             entry = self.cache.get_entry(msg.addr) # what if the entry is not in cache?
             #tbe = self.tbes.entries[msg.addr]
 
-            # if miss and cache full
+            # if miss and cache full --> first thing to check to handle to Replacement event
             #if not entry.isValid and not self.cache.is_cache_available(msg.addr):
             if not entry.isValid and not self.cache.is_cache_available():
             # if entry.state is State.I and not self.cache.is_cache_available(msg.addr):
@@ -402,50 +378,38 @@ class CacheController:
                 replacement_addr = self.cache.getReplacementAddr()
                 replacement_entry = self.cache.get_entry(replacement_addr)
                 self.trigger(Event.Replacement, replacement_addr, replacement_entry, msg)
-            else: # if entry is valid
+
+            else: # now we assume entry is valid
                 if msg.msg_type is MessageType.Load:
                     self.trigger(Event.Load, msg.addr, entry, msg)
+                    channel.transaction_ongoing = True 
+
                 elif msg.msg_type is MessageType.Store:
                     self.trigger(Event.Store, msg.addr, entry, msg)
+                    channel.transaction_ongoing = True 
                 else:
                     raise ValueError("Unexpected request type from processor")   
     
+
+
 ## EVENT TRIGGER    
     # trigger will cause state transition and will result in action
     # --> queue the output message
     # call do_trasition here
     def trigger(self, event, addr, cache_entry, message = None, tbe=None):
         # Event handling logic to be implemented
-        print(f"Triggered {event.name} for address {addr}")
 
-        if event is Event.DataDirNoAcks:
-            print(f"DataDirNoAcks for address {addr}")
-            self.doTransition(event, addr, cache_entry, message, tbe)
-        elif event is Event.DataDirAcks:
-            print(f"DataDirAcks for address {addr}")
-            self.doTransition(event, addr, cache_entry, message, tbe)
-        elif event is Event.DataOwner:
-            print(f"DataOwner for address {addr}")
-            self.doTransition(event, addr, cache_entry, message, tbe)
-        elif event is Event.InvAck:
-            print(f"InvAck for address {addr}")
-            self.doTransition(event, addr, cache_entry, message, tbe)
-        elif event is Event.LastInvAck:
-            print(f"LastInvAck for address {addr}")
-            self.doTransition(event, addr, cache_entry, message, tbe)
-        elif event is Event.Load:
-            print(f"Load for address {addr}")
-            self.doTransition(event, addr, cache_entry, message, tbe)
-        elif event is Event.Store:    
-            print(f"Store for address {addr}")
-            self.doTransition(event, addr, cache_entry, message, tbe)
+        print(f"Triggered {event.name} for address {addr}")
+        self.doTransition(event, addr, cache_entry, message, tbe)
+        
         
 
 ## ACTIONS
     ## below are called during do_transition
     
-    def allocateTBE(self, addr):
-        self.tbes.allocate(addr)
+    # state information during trasaction
+    def allocateTBE(self, addr, cache_entry):
+        self.tbes.allocate(addr, cache_entry)
         print("TBE allocated for transition.")
 
     def deallocateTBE(self, addr):
@@ -474,64 +438,50 @@ class CacheController:
 
     # Send request to directory
     def sendGetS(self, addr):
-        out_msg = Message(msg_type = MessageType.GetS, addr = addr, src = self.deviceID, dest = self.dirID) #data_block size?
-        self.channels["request_out"].enqueue(out_msg)
+        out_msg = Message(msg_type = MessageType.GetS, addr = addr, src = self.deviceID, dst = self.dirID) 
+        self.channels["request_out"].send_message(out_msg)
         print("GetS message sent for read access.")
 
     def sendGetM(self, addr):
-        out_msg = Message(msg_type = MessageType.GetM, addr = addr, src = self.deviceID, dest = self.dirID)
-        self.channels["request_out"].enqueue(out_msg)
+        out_msg = Message(msg_type = MessageType.GetM, addr = addr, src = self.deviceID, dst = self.dirID)
+        self.channels["request_out"].send_message(out_msg)
         print("GetM message sent to fetch exclusive access.")
 
-    def sendPutS(self, addr): # need to remove this request
-        out_msg = Message(msg_type = MessageType.PutS, addr = addr, src = self.deviceID, dest = self.dirID)
-        self.channels["request_out"].enqueue(out_msg)
-        print("PutS message sent for downgrading the block state.")
-
     def sendPutM(self, addr, cache_entry):
-        out_msg = Message(msg_type = MessageType.PutM, addr = addr, src = self.deviceID, dest = self.dirID)
-        self.channels["request_out"].enqueue(out_msg)
+        out_msg = Message(msg_type = MessageType.PutM, addr = addr, src = self.deviceID, dst = self.dirID)
+        self.channels["request_out"].send_message(out_msg)
         print("PutM message sent to evict block from modified state.")
 
     # Cache
     def allocateCacheBlock(self, entry):
         # assert isValid
         # asert cache is not full
-        self.cache.set_entry(entry)     
-    
+        self.cache.set_entry(entry)  
+
+    def deallocateCacheBlock(self, addr):
+        self.cache.invalidate(addr)
+        print("Cache block deallocated.")  
+
     def writeDataToCache(self, message, cache_entry):
         #cache_entry.data_block = message.data_block
         self.cache.set_entry(cache_entry)
         print("Data written to cache block.")
 
-    def sendCacheDataToReq(self, message, cache_entry):
-        out_msg = Message(msg_type = MessageType.Data, addr = message.addr, src=self.deviceID, dest = message.fwd_dest)
+    def sendCacheDataToReq(self, message):
+        out_msg = Message(msg_type = MessageType.DataOwner, addr = message.addr, src=self.deviceID, dst = message.fwd_dest) #destination node?
         self.channels["response_out"].enqueue(out_msg)        
         print("Cache data sent to requestor.")
 
-    def sendCacheDataToDir(self, message, cache_entry):
-        out_msg = Message(msg_type = MessageType.Data, addr = message.addr, src=self.deviceID, dest = self.dirID)
+    def sendCacheDataToDir(self, message):
+        out_msg = Message(msg_type = MessageType.Data, addr = message.addr, src=self.deviceID, dst = self.dirID)
         self.channels["response_out"].enqueue(out_msg)
         print("Cache data sent to directory.")
 
-    def sendInvAcktoReq(self, message):
-        out_msg = Message(msg_type = MessageType.InvAck, addr = message.addr, src=self.deviceID, dest = message.fwd_dest)
+    def sendInvAcktoDir(self, addr):
+        out_msg = Message(msg_type = MessageType.InvAck, addr = addr, src=self.deviceID, dst = self.dirID)
         self.channels["response_out"].enqueue(out_msg)
         print("Invalidation Ack sent to requestor.")
 
-    def deallocateCacheBlock(self, addr):
-        self.cache.invalidate(addr)
-        print("Cache block deallocated.")
-
-    def decrAcks(self,addr):
-        # self.acks_outstanding -= 1
-        self.tbes[addr].acks_outstanding -= 1
-        print(f"Acks outstanding decremented, now {self.acks_outstanding}.")
-
-    def storeAcks(self,addr,message):
-        # assert self.tbes.is_valid(addr)
-        self.tbes[addr].acks_outstanding += message.ackCnt
-        print("Store acknowledgements processed.")
 
     # Message Buffer Management
     def popInstructionQueue(self):
@@ -545,145 +495,136 @@ class CacheController:
         self.channels["response_in"].transaction_ongoing = False
         print("Response queue popped for processing.")
 
-    def popForwardQueue(self):
-        self.channels["forward_in"].dequeue()
-        self.channels["forward_in"].transaction_ongoing = False
-        print("Forward queue popped for processing.")
+    def popRequestQueue(self):
+        self.channels["request_in"].dequeue()
+        self.channels["request_in"].transaction_ongoing = False
+        print("Request queue popped for processing.")
     
     def stall():
         print("Stalling: Unsupported event in current state.")
+        return None
 
 ## STATE TRANSITION
     # process event and do state transition
     def doTransition(self, event, addr, cache_entry, message=None, tbe=None):
         print(f"Processing event: {event} in state: {cache_entry.state}")
-        
+        print(cache_entry)
+        print(event)
+        print ("TYPE MISMATCH CHECK")
+        print(f"cache_entry.state: {cache_entry.state}, State.I: {State.I}")
+        #print(f"Type of cache_entry.state: {type(cache_entry.state)}, Type of State.I: {type(State.I)}")
+
         ## define state transition
         ## transition (cur_state, event, next_state) --> action
         if cache_entry.state is State.I:
-            if event is Event.Load:
+            print("transition state pass") # this doesn't run... 
+            if event == Event.Load:
                 cache_entry.state =  State.IS_D
-                # self.allocateCacheBlock()
-                cache_entry.set_entry(cache_entry)
-                self.allocateTBE(addr)
+                print(cache_entry)
+                self.allocateCacheBlock(cache_entry) # allocating cache entry if miss returns
+                self.allocateTBE(addr, cache_entry)
                 self.sendGetS(addr)
-                self.popInstructionQueue() # start when state changes to S?
                 print("Transition from I to IS_D state: Load request received in Invalid state.")
             elif event is Event.Store:
-                cache_entry.state =  State.IM_AD 
-                # self.allocateCacheBlock(cache_entry)
-                cache_entry.set_entry(cache_entry)
-                self.allocateTBE(addr)
+                cache_entry.state =  State.IM_D 
+                self.allocateCacheBlock(cache_entry) # allocating cache entry if miss returns
+                #cache_entry.set_entry(cache_entry) wrong
+                self.allocateTBE(addr, cache_entry)
                 self.sendGetM(addr)
-                self.popInstructionQueue() # start when state changes to M?              
                 print("Transition from I to IM_D state: Store request received in Invalid state.")
+            elif event is Event.Inv:
+                self.sendInvAcktoDir(addr)
+                self.popRequestQueue()                
 
-        elif cache_entry.state is State.IS_D :
+        elif cache_entry.state in [State.IS_D, State.IM_D] :
             if event in [Event.Load, Event.Store, Event.Replacement]:
                 self.stall
-            ## Invalidation mesage always ack --> just change at trigger?
             elif event is Event.Inv:
-                self.sendInvAcktoReq(message)
-            elif event in [Event.DataDirNoAcks, Event.DataOwner]:
+                self.sendInvAcktoDir(addr)
+                self.popRequestQueue()                
+
+        elif cache_entry.state is State.IS_D :
+            if event is Event.DataDir:
                 cache_entry.state = State.S
-                self.writeDataToCache(message, cache_entry)
+                self.writeDataToCache(message, cache_entry) # don't need now
                 self.deallocateTBE(addr)
                 self.loadMiss()
-                print("Transition to Shared state: Data received with no ACKs required.")
+                self.popInstructionQueue()  
+                print("Transition to Shared state: Data received from LLC.")
 
-        elif cache_entry.state in [State.IM_AD, State.IM_A] :
-            if event in [Event.Load, Event.Store, Event.FwdGetS, Event.FwdGetM]:
-                self.stall
-
-        elif cache_entry.state is [State.IM_AD, State.SM_AD]:
-            if event in [Event.DataDirNoAcks, Event.DataOwner]:
+        elif cache_entry.state is State.IM_D:
+            if event in [Event.DataDir, Event.DataOwner]:
                 cache_entry.state = State.M
-                print("Transition to M state: Data received with no ACKs required.")
-                self.writeDataToCache(message, cache_entry)
                 self.deallocateTBE(addr)
                 self.storeMiss()
-                self.popResponseQueue()    
-
-        elif cache_entry.state is State.IM_AD:
-            if event is Event.DataDirAcks:
-                cache_entry.state = State.IM_A
-                print("Transition to IM_A state: Data received with ACKs required.")
-                self.writeDataToCache(message, cache_entry)
-                self.storeAcks(addr, message)
-                self.popResponseQueue()
-        
-        elif cache_entry.state in [State.IM_AD, State.IM_A, State.SM_AD, State.SM_A] :
-            if event is Event.InvAck:
-                self.decrAcks(addr)
-                self.popResponseQueue()        
-
-        elif cache_entry.state is [State.IM_A, State.SM_A]:
-            if event is Event.LastInvAck:
-                cache_entry.state = State.M
-                print("Transition to M state: Data received with no ACKs required.")
-                self.deallocateTBE(addr)
-                self.storeMiss()
-                self.popResponseQueue()    
-
-        elif cache_entry.state in [State.S, State.SM_AD, State.SM_A, State.M] :
-            if event is Event.Load:
-                self.loadHit(cache_entry)
                 self.popInstructionQueue()
+                self.popResponseQueue()    
+                print("Transition to M state: Data received")
 
         elif cache_entry.state is State.S:
-            if event is Event.Store:
-                cache_entry.state = 'SM_AD'
+            if event is Event.Load:
+                self.loadHit(cache_entry)
+                self.popInstructionQueue()            
+            elif event is Event.Store:
+                cache_entry.state = State.SM_D
+                allocateTBE(addr, cache_entry)
                 self.sendGetM(addr)
-                self.popInstructionQueue()
                 print("Transition to SM_AD state: Store request received in Shared state.")
-            elif event is Event.Inv:
-                cache_entry.state = 'I'
-                self.sendInvAcktoReq(message)
-                self.popForwardQueue()
-                print("Transition to I state: Invalidation request received in Shared state.")
             # no explicit PutS message for replacement, instead need to respond to all Ack
+            # we are doing a state transition for replacement address
+            # original address with memory request transitions to 
             elif event is Event.Replacement:
-              cache_entry.state = State.SI_A
-
-        elif cache_entry.state in [State.SM_AD, State.SM_A]:
-            if event in [Event.Store, Event.Replacement, Event.FwdGetS, Event.FwdGetM]:
-                self.stall
+                cache_entry.state = State.I               
+            elif event is Event.Inv:
+                cache_entry.state = State.IM_D
+                self.sendInvAcktoDir(addr)
+                self.popRequestQueue() #response queue
+                print("Transition to I state: Invalidation request received in Shared state.")
         
-        elif cache_entry.state is State.SM_AD:
-            if event is Event.Inv:
-                cache_entry.state = State.IM_AD
-                self.sendInvAcktoReq(message)
-                # self.acks_outstanding -= 1
-                # print(f"Processed InvAck: {self.acks_outstanding} ACKs remaining.")
-            elif event is Event.DataDirAcks:
-                cache_entry.state = State.SM_A
-                self.writeDataToCache(message, cache_entry)
-                self.storeAcks(addr, message)
+        
+        elif cache_entry.state is State.SM_D:
+            if event is Event.Load:
+                self.loadHit(cache_entry)
+                self.popInstructionQueue()                    
+            elif event in [Event.Store, Event.Replacement, Event.FwdGetS, Event.FwdGetM]:
+                self.stall            
+            elif event is Event.Inv:
+                cache_entry.state = State.IM_D
+                self.sendInvAcktoDir(addr)
+                self.popRequestQueue()                
+            elif event is Event.DataDir:  
+                cache_entry.state = State.M
+                self.deallocateTBE(addr)
+                self.storeMiss()
+                self.popInstructionQueue()
                 self.popResponseQueue()    
-
-            # if self.acks_outstanding is 0 and event is Event.LastInvAck:
-            #     cache_entry.state = State.M
-            #     print("Transition to Modified state: Last InvAck received.")
+                print("Transition to M state: Ownership received")
 
         elif cache_entry.state is State.M:
-            if event is Event.Replacement:
-                cache_entry.state = State.I
-                self.data_block = None
-                print("Invalidated cache: Replacement occurred.")
+            if event is Event.Load:
+                self.loadHit(cache_entry)
+                self.popInstructionQueue()                
             elif event is Event.Store:
-                print("Processing Store event in Modified state.")
                 self.storeHit(cache_entry)
                 self.popInstructionQueue()
+                print("Processing Store event in Modified state.")
+            elif event is Event.Replacement:
+                cache_entry.state = State.MI_A
+                self.sendPutM(addr, cache_entry)
+                print("Invalidated cache: Replacement occurred.")                
             elif event is Event.FwdGetS:
+                cache_entry.state = State.S
+                self.sendCacheDataToDir(message)
+                self.popRequestQueue()
                 print("Processing FwdGetS event in Modified state.")
-                self.sendCacheDataToReq(message, cache_entry)
-                self.sendCacheDataToDir(message, cache_entry)
-                self.popForwardQueue()
             elif event is Event.FwdGetM:
+                cache_entry.state = State.I
                 print("Processing FwdGetM event in Modified state.")
-                self.sendCacheDataToReq(message, cache_entry)
-                self.deallocateCacheBlock(addr)
-                self.popForwardQueue()
+                self.sendCacheDataToReq(message)
+                self.popRequestQueue()
+            elif event is Event.Inv:
+                self.sendInvAcktoDir(addr)   
+                self.popRequestQueue()                             
 
         elif cache_entry.state in [State.MI_A, State.SI_A, State.II_A]:
             if event in [Event.Load, Event.Store, Event.Replacement]:
@@ -692,34 +633,34 @@ class CacheController:
                 cache_entry.state = State.I
                 print("Transition to I state: PutAck received.")
                 self.deallocateCacheBlock(addr)
-                self.popForwardQueue()        
+                self.popRequestQueue()        
     
         elif cache_entry.state is State.MI_A:
             if event is Event.FwdGetS:
                 cache_entry.state = State.SI_A
                 print("Transition to SI_A state: Forwarding cache data.")
-                self.sendCacheDataToReq(message, cache_entry)
-                self.sendCacheDataToDir(message, cache_entry)
-                self.popForwardQueue()
+                self.sendCacheDataToDir(message)
+                self.popRequestQueue()
             elif event is Event.FwdGetM:
                 cache_entry.state = State.II_A
                 print("Transition to II_A state: Forwarding cache data.")
-                self.sendCacheDataToReq(message, cache_entry)
-                self.popForwardQueue()
+                self.sendCacheDataToReq(message)
+                self.popRequestQueue()
+            elif event is Event.Inv:
+                self.sendInvAcktoDir(addr)       
+                self.popRequestQueue()                             
 
         elif cache_entry.state is State.SI_A:
             if event is Event.Inv:
                 cache_entry.state = State.II_A
                 print("Transition to II_A state: Invalidating cache block.")
-                self.sendInvAcktoReq(message)
-                self.popForwardQueue()
+                self.sendInvAcktoDir(addr)
+                self.popRequestQueue()
 
         elif cache_entry.state is State.II_A:
-            if event is Event.PutAck:
-                cache_entry.state = State.I
-                print("Transition to I state: PutAck received.")
-                self.deallocateCacheBlock(addr)
-                self.popForwardQueue()
+            if event is Event.Inv:
+                self.sendInvAcktoDir(addr)   
+                self.popRequestQueue() 
 
 ## BARRIER HANDLING
     def print_barriers(self):
@@ -731,42 +672,56 @@ class CacheController:
             for barrier in self.barriers:
                 for barrier_id, count in barrier.items():
                     print(f"Barrier ID: {barrier_id}, Count: {count}")
+    
+    def get_barrier(self): # set flag for encountered barrier ID
+        return self.barrier_count
+    
+    # CPU_barrier has to be 'string' type currently because barrier is parsed from a file
+    def update_barrier(self, CPU_barrier): # input encountered barrier ID, this function should update barrier cnt 
+        # currently assume id in order ex) 0 1 3 5
 
+        # find a matching barrier, if none just pass
+        for barrier_dict in self.barriers:
+            if CPU_barrier in barrier_dict:
+                barrier_dict[CPU_barrier] -= 1        
+                    # if the count reaches zero
+                    # end of barrier
+                    # pop should be done in CPU side
+                    # if barrier_dict[CPU_barrier] <= 0:
+                    #     self.barriers.dequeue() #pop head
+                
+                break  # Exit the loop after updating the barrier
+        else:
+            print(f"No barrier found with ID {CPU_barrier}")
 
 
 
 ## OUTPUT INTERFACE
-    # returns response message and dequeues it from reponse queue
 
-    def receive_resp_msg(self) : 
-        response_channel = self.channels['response_out']
-        if response_channel.is_empty():
-            return None
-        else:
-            # we assume stalling is handled in the top level
-            # if rep_queue.is_full():
-            #     return None
-            # else: 
-            message = response_channel.dequeue()
-            # we assume LLC response input queue enqueing is handled seperately
-            # rep_queue.enqueue(channels['response_out'][0])
-            return message
-        
+    def receive_rep_msg(self, message):
+        self.channels['response_in'].send_message(message)
+        print(f"Received and enqueued to response_in: {message}")
 
-    def get_generated_msg(self) : #peek req_queue
-        request_channel = self.channels['request_out']
-        if request_channel.is_empty():
-            return None
+    def receive_req_msg(self, message):
+        self.channels['request_in'].send_message(message)
+        print(f"Received and enqueued to request_in: {message}")
+    
+    def get_generated_msg(self):
+        if not self.channels['response_out'].is_empty():
+            self.last_peeked_channel = 'response_out'
+            return self.channels['response_out'].peek()
+        elif not self.channels['request_out'].is_empty():
+            self.last_peeked_channel = 'request_out'
+            return self.channels['request_out'].peek()
         else:
-            return request_channel.peek()
+            self.last_peeked_channel = None
+            return None
 
-    def take_generated_msg(self) : #pop req_queue
-        request_channel = self.channels['request_out']
-        if request_channel.is_empty():
-            return None
-        else:
-            message = request_channel.dequeue()
-            # return message
+    def take_generated_msg(self):
+        if self.last_peeked_channel and not self.channels[self.last_peeked_channel].is_empty():
+            return self.channels[self.last_peeked_channel].dequeue()
+        return None
+    
 
 
 

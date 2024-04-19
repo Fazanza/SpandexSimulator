@@ -10,6 +10,7 @@ from clock import Clock
 from msi_coherence import *
 from parser import *
 import os
+from test.channel import *
 
 
 class TestCacheSystem(unittest.TestCase):
@@ -206,18 +207,95 @@ class TestCacheSystem(unittest.TestCase):
             print(f"CLOCK TICK : {clock.tick}")
             cache_ctrl.runCPU()
             #cache_ctrl.popInstructionQueue()
-            cache_ctrl.channels['instruction_in'].transaction_ongoing = False
+            #cache_ctrl.channels['instruction_in'].transaction_ongoing = False
             print(f"Barrier Flag (ID) : {cache_ctrl.encounter_barrier}")
             # for debugging
             #cache_ctrl.channels['instruction_in'].print_all_messages()
 
         #cache_ctrl.popInstructionQueue()
-        for _ in range(5):
-            clock.clockEdge()
-            cache_ctrl.runCPU()
-            # for debugging
-            cache_ctrl.channels['instruction_in'].print_all_messages()
-            print(cache_ctrl.encounter_barrier)
+        #for _ in range(1):
+        clock.clockEdge()
+        cache_ctrl.update_barrier("0") 
+        cache_ctrl.update_barrier("0")
+        cache_ctrl.runCPU()
+
+        # for debugging
+        cache_ctrl.channels['instruction_in'].print_all_messages()
+        print(cache_ctrl.encounter_barrier)
+        cache_ctrl.print_barriers()
+        
+        #for _ in range(1)
+        clock.clockEdge()
+        cache_ctrl.update_barrier("0")        
+        cache_ctrl.runCPU()
+        cache_ctrl.print_barriers()
+
+        #for _ in range(1)
+        clock.clockEdge()
+        cache_ctrl.update_barrier("0")
+        cache_ctrl.runCPU()
+        cache_ctrl.print_barriers()
+        
+
+        #for _ in range(1)
+        clock.clockEdge()
+        cache_ctrl.runCPU()
+        cache_ctrl.print_barriers()
+        print(cache_ctrl.encounter_barrier)
+
+        #for _ in range(1)
+        clock.clockEdge()
+        cache_ctrl.runCPU()
+        cache_ctrl.print_barriers()
+        print(f"encounter flag: {cache_ctrl.encounter_barrier}")
+        
+    def test_msi(self):
+        # Instantiate CPU [L1]
+        cache_ctrl = CacheController(20)
+        cache_ctrl.cache.print_contents()  # Print initial state
+        cache_ctrl.setCPU() #parse mem traces
+        cache_ctrl.channels['instruction_in'].print_all_messages()
+
+
+        # setup cache
+        cache = cache_ctrl.cache
+        c1 = CacheEntry(0x1, State.S, True, False, [0x01, 0x02, 0x03, 0x04])
+        c2 = CacheEntry(0x45, State.M, True, False, [0x05, 0x06, 0x07, 0x08])
+        c3 = CacheEntry(0x85, State.I, True, False, [0x11, 0x12, 0x13, 0x14])
+        c4 = CacheEntry(0x123, State.S, True, False, [0x0D, 0x0E, 0x0F, 0x10])
+        Cache.set_entry(cache, c1)
+        Cache.set_entry(cache, c2)
+        Cache.set_entry(cache, c3)
+        Cache.set_entry(cache, c4)
+        cache_ctrl.cache.print_contents()
+
+        # enque some request and response
+
+
+
+
+ 
+    def test_comm(self):
+        # Example usage
+        comm_system = CommunicationSystem()
+        # Assuming channels are filled with some data
+        comm_system.channels['request_out'].queue.append('Request1')
+        comm_system.channels['response_out'].queue.append('Response1')
+        comm_system.channels['response_out'].queue.append('Response2')
+
+
+        print(comm_system.get_generated_msg())  # Should print 'Response1' (Response priority)
+        print(comm_system.get_generated_msg())
+        print(comm_system.get_generated_msg())
+        print(comm_system.take_generated_msg()) # Should remove and print 'Response1'
+        print(comm_system.get_generated_msg())
+        print(comm_system.take_generated_msg())
+        print(comm_system.get_generated_msg())
+        print(comm_system.take_generated_msg())
+        print(comm_system.take_generated_msg())
+        print(comm_system.get_generated_msg())
+        
+
    
 # Run tests
 if __name__ == '__main__':

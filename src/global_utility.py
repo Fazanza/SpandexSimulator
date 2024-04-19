@@ -42,15 +42,50 @@ class msg_type(Enum):
     FwdRvkO = auto()
     Inv = auto()
 
-    #Data Response from CPU
-    Data = auto() # Dir
-    DataOwner = auto() #
-
     # Req generated from Node Instruction
     Load = auto()
     Store = auto()
     Barrier = auto()
 
+    # CPU message type
+    GetS = auto()
+    GetM = auto()
+    PutM = auto()
+    FwdGetS = auto()
+    FwdGetM = auto()
+    DataDir = auto() # data from LLC
+    DataOwner = auto() # data from Owner
+    PutAck = auto()
+    Data = auto() # data from cpu to LLC
+
+# class msg_classify:
+#     msg_map = {
+#         msg_type.ReqV       :       msg_class.Request   ,
+#         msg_type.ReqS       :       msg_class.Request   ,
+#         msg_type.ReqWT      :       msg_class.Request   ,
+#         msg_type.ReqOdata   :       msg_class.Request   ,
+#         msg_type.ReqWB      :       msg_class.Request   ,
+#         msg_type.InvAck     :       msg_class.Response  ,
+#         msg_type.RepRvkO    :       msg_class.Response  ,
+#         msg_type.RepFwdV    :       msg_class.Response  ,
+#         msg_type.RepFwdV_E  :       msg_class.Response  ,
+#         msg_type.RepS       :       msg_class.Response  ,
+#         msg_type.RepV       :       msg_class.Response  ,
+#         msg_type.RepWT      :       msg_class.Response  ,
+#         msg_type.RepWB      :       msg_class.Response  ,
+#         msg_type.RepOdata   :       msg_class.Response  ,
+#         msg_type.FwdReqS    :       msg_class.Request   ,
+#         msg_type.FwdReqV    :       msg_class.Request   ,
+#         msg_type.FwdReqV_E  :       msg_class.Request   ,
+#         msg_type.FwdReqOdata:       msg_class.Request   ,
+#         msg_type.FwdRvkO    :       msg_class.Request   ,
+#         msg_type.Inv        :       msg_class.Request   ,
+#         msg_type.FwdGetS    :       msg_class.Request   ,
+#         msg_type.FwdGetM    :       msg_class.Request   ,
+#         msg_type.DataDir    :       msg_class.Response  ,
+#         msg_type.DataOwner  :       msg_class.Response  ,
+#         msg_type.PutAck     :       msg_class.Response  
+#     }
 
 class type(Enum):
     Success = auto()
