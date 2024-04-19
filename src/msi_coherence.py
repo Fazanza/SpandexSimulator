@@ -701,9 +701,8 @@ class CacheController:
         if request_channel.is_empty():
             return None
         else:
-            else: 
-                message = request_channel.dequeue()
-                return message
+            message = request_channel.dequeue()
+            # return message
 
 
 
