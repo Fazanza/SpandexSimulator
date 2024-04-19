@@ -22,6 +22,7 @@ class GPU_Controller:
         self.current_rep_msg = None
         self.barrier_name = None
         self.barrier_name_observed = None
+        self.Fill_Inst(file_name)
         
     def Fill_Inst(self, file_name):
         with open(file_name, 'r') as file:
@@ -44,7 +45,7 @@ class GPU_Controller:
                 else:
                     print("There is undefine instruction type")
                 self.barrier_map.enqueue(inst)
-
+    
     def get_new_rep(self):
         if self.rep_msg_box.is_empty():
             return None
@@ -59,8 +60,7 @@ class GPU_Controller:
             return None
         else:
             return self.inst_buffer.peek()
-    
-
+        
     ## check if instruction can be executed, if there are still pending request on target address, the instruction can not be executed
     def is_inst_qualified(self, addr):
         state = self.cache.getState_line(addr)
@@ -187,10 +187,17 @@ class GPU_Controller:
             return type.Error
         return type.Success
     
+    
+    ################### The Functions should be called at Top Level ###################
     # for getting response from LLC and CPU
-    def receieve_rep_msg(self, msg_type, addr, src, dst, ack_cnt, fwd_dst):
-        msg = Msg(msg_type, addr, src, dst, ack_cnt, fwd_dst)
+    def receieve_rep_msg(self, msg):
         self.rep_msg_box.enqueue(msg)
+        
+    def get_generated_msg(self):
+        return self.generated_msg
+    
+    def taken_generated_msg(self):
+        self.generated_msg = None
         
     # receiece barrier info from top, call one time if One Node send a barrier before GPU execution in the same cycle
     def update_barrier(self, barrier_name):
@@ -207,6 +214,9 @@ class GPU_Controller:
         temp = self.barrier_name_observed
         self.barrier_name_observed = None
         return temp;
+    
+    def is_finish(self):
+        return self.finish
 
     def GPU_run(self):
         # First execute response
@@ -224,7 +234,7 @@ class GPU_Controller:
         # 2. wait for LLC message queue available
         if self.wait == True:
             if self.current_inst.inst_type == Inst_type.Barrier: # should not continue
-                return None, None
+                return 0
             else:
                 self.wait == False # retry
         
@@ -234,7 +244,7 @@ class GPU_Controller:
         if inst == None:
             self.finish = True
             print("GPU finish execution")
-            return None, None;
+            return 0
         self.current_inst = inst
         if inst.inst_type == Inst_type.Load:
             # if self.is_inst_qualified(inst.addr) == True:
@@ -244,11 +254,12 @@ class GPU_Controller:
             inst_msg = Msg(msg_type.Load, inst.addr, Node.GPU, Node.GPU, 0, Node.NULL)
             current_state = self.get_current_state(inst_msg)
             load_result = self.do_transition(current_state, inst_msg)
-            
             assert load_result != type.Error, "Error! GPU wrong when execute Load instruction"
-            if load_result == type.Block: # this load instruction can not proceed in this cycle
+             # this load instruction can not proceed in this cycle
+            if load_result == type.Block:
                 assert self.generated_msg == None, "Error! GPU has generated response if load instruction is Block"
                 self.wait = True
+                
             elif load_result == type.Success:
                 self.cache.renewAccess(inst_msg.addr)
                 assert self.wait == False, "Error! GPU is waiting after a Success Load"
@@ -261,9 +272,9 @@ class GPU_Controller:
             inst_msg = Msg(msg_type.Store, inst.addr, Node.GPU, Node.GPU, 0, Node.NULL)
             current_state = self.get_current_state(inst_msg)
             store_result = self.do_transition(current_state, inst_msg)
-            
             assert store_result != type.Error, "Error! GPU wrong when execute Load instruction"
-            if store_result == type.Block: # this load instruction can not proceed in this cycle
+            # this Store instruction can not proceed in this cycle
+            if store_result == type.Block:
                 assert self.generated_msg == None, "Error! GPU has generated response if Store instruction is Block"
                 self.wait = True
             elif store_result == type.Success:
@@ -271,36 +282,31 @@ class GPU_Controller:
                 assert self.wait == False, "Error! GPU is waiting after a Success Store"
             
         elif inst.inst_type == Inst_type.Barrier:
-            self.barrier_name = inst.barrier_name
-            self.barrier_name_observed = inst.barrier_name
             self.update_barrier(inst.barrier_name)
             if self.barrier_map.search(inst.barrier_name) != 0:
+                self.barrier_name = inst.barrier_name
+                self.barrier_name_observed = inst.barrier_name
                 self.wait = True
             else:
+                assert self.barrier_name == Node and self.barrier_name_observed == None, "Error, GPU has wrong barrier output"
                 self.wait  = False
                 self.inst_buffer.dequeue()
                 self.cache.clear() # self invalidation after pass barrier
             assert self.generated_msg == None, "Error! GPU has generated msg when execute Barrier instruction"
-            return self.generated_msg, inst.barrier_name
+            return 0
 
+
+    ## this function should take the response from Top, have to follow GPU_RUN(), after update_barrier
+    #  whether the previous generated msg can be taken by LLC
+    def GPU_POST_RUN(self):
         # if instruction will not generate any msg, like read hit, shoud continue
         # if instruction is blocked, it can not generate msg, and will set self.wait = True during transaction
         if self.generated_msg == None and self.wait == False:
             self.inst_buffer.dequeue()
-
-        return self.generated_msg, None
-
-    ## this function should take the response from Top, have to follow GPU_RUN(), after update_barrier
-    #  whether the previous generated msg can be taken by LLC
-    def GPU_POST_RUN(self, msg_taken):
         if self.generated_msg != None and self.wait == False:
-            if msg_taken == True:
-                assert self.current_inst.inst_type == Inst_type.Load or self.current_inst.inst_type == Inst_type.Store
-                self.wait  = False
-                self.inst_buffer.dequeue()
-            elif msg_taken == False:
-                self.wait = True
+            self.wait = True
         self.generated_msg = None # reset generated_msg; if generated_msg is not taken, should be reset and regenerated for retry
+        self.clk_cnt = self.clk_cnt + 1
 
 
     #############

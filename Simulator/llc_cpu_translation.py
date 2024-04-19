@@ -1,7 +1,6 @@
 from enum import Enum, auto
 import random
 from collections import deque
-from llc_utility import *
 from global_utility import *
 from llc import *
 from llc_cpu_translation import *
@@ -42,9 +41,12 @@ class Translation:
             else:
                 return msg_type.DataOwner
         
-    def get_value(self, Msg_type, addr):
-        real_msg_type = self.State_preProcess(Msg_type, addr)
+    def translate_msg(self, Msg):
+        msg = Msg
+        real_msg_type = self.State_preProcess(msg.msg_type, msg.addr)
         if real_msg_type in self.translation_map:
-            return self.translation_map[real_msg_type]
+            msg.msg_type = self.translation_map[real_msg_type]
+            return msg
         else:
-            return " msg_type not found in translation map."
+            print(f"msg_type {real_msg_type} not found in translation map.")
+            quit()

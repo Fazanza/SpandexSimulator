@@ -55,12 +55,16 @@ class msg_type(Enum):
     FwdGetM = auto()
     DataDir = auto() # data from LLC
     DataOwner = auto() # data from Owner
+    PutAck = auto()
     Data = auto() # data from cpu to LLC
     
     ## temp state used in translation map, not any actual state in protocol
     Data_V = auto() # represent LLC should receieve RepFwdV instead of RepRvkO
     DataOwner_V = auto() # represent LLC should receieve RepFwdV_E instead of RepRvkO
 
+class msg_class(Enum):
+    Request = auto()
+    Response = auto()
 
 class type(Enum):
     Success = auto()
