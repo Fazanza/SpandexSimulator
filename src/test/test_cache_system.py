@@ -190,6 +190,34 @@ class TestCacheSystem(unittest.TestCase):
         message_buffer = VirtualChannel()
         parser = Parser()
         parser.process_trace_file(file_path, message_buffer)
+    
+    def test_barrier(self):
+        # Instantiate CPU [L1]
+        cache_ctrl = CacheController(20)
+        cache_ctrl.cache.print_contents()  # Print initial state
+        cache_ctrl.setCPU() #parse mem traces
+        cache_ctrl.channels['instruction_in'].print_all_messages()
+        cache_ctrl.print_barriers()
+
+        # dequeue inst 
+        clock = Clock()
+        for _ in range(3):
+            clock.clockEdge()
+            print(f"CLOCK TICK : {clock.tick}")
+            cache_ctrl.runCPU()
+            #cache_ctrl.popInstructionQueue()
+            cache_ctrl.channels['instruction_in'].transaction_ongoing = False
+            print(f"Barrier Flag (ID) : {cache_ctrl.encounter_barrier}")
+            # for debugging
+            #cache_ctrl.channels['instruction_in'].print_all_messages()
+
+        #cache_ctrl.popInstructionQueue()
+        for _ in range(5):
+            clock.clockEdge()
+            cache_ctrl.runCPU()
+            # for debugging
+            cache_ctrl.channels['instruction_in'].print_all_messages()
+            print(cache_ctrl.encounter_barrier)
    
 # Run tests
 if __name__ == '__main__':

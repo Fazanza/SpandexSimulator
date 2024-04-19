@@ -17,8 +17,7 @@ class Parser:
             Node.CPU2: 'cpu_2' ,
             Node.CPU3: 'cpu_3' 
         }
-        device_str = device_str.lower().replace(' ', '')
-        if device_str in device_mapping:
+        if deviceID in device_mapping:
             return device_mapping[deviceID]
         else:
             raise ValueError(f"Unknown device type: {device_str}")
@@ -50,8 +49,11 @@ class Parser:
                 raise ValueError("Insufficient arguments for BARRIER.")
             barrier_id = parts[1] # barrier ID
             barrier_count = int(parts[2]) # barrier count
-            barriers[barrier_id] = barrier_count
-            print(f"barrierid: {barrier_id}, barreir_count{barrier_count}")
+            
+            #enque barrier 
+            barriers.append({barrier_id: barrier_count})
+            #barriers[barrier_id] = barrier_count
+            print(f"barrierId: {barrier_id}, barreir_count{barrier_count}")
             #return self.MemoryRequest(MessageType.Barrier, barrier_count, Node.NULL)
             return Message(msg_type = MessageType.Barrier)
 
@@ -88,8 +90,8 @@ class Parser:
     
     def get_file_path(self, deviceID):
         # need to file_name for device - given from cache controller Device Type
-        file_name = self.parse_device_type(deviceID)
-        # file_name = 'memory_trace_toy.txt'
+        #file_name = self.parse_device_type(deviceID+'.txt')
+        file_name = 'memory_trace_toy.txt'
 
         # get file path
         src_directory = os.getcwd()
