@@ -68,7 +68,7 @@ class System:
     
     def CPU_RUN(self, CPU_Node):
         CPU = self.Device_Map.search(CPU_Node)
-        CPU.runCPU()
+        CPU.CPU_run()
         # do barrier
         CPU_barrier = CPU.get_barrier()
         if CPU_barrier != None:
@@ -94,6 +94,7 @@ class System:
                 else:
                     self.Device_Map.search(generated_msg.dst).receieve_rep_msg(self.TPU.translate_msg(generated_msg))
                 CPU.take_generated_msg() # pop from LLC generated_msg_queue
+        CPU.CPU_POST_RUN()
 
     def SYSTEM_RUN(self):
         # Run 
