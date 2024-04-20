@@ -20,17 +20,20 @@ llc_max_delay = 3
 llc_mem_delay = 10
 
 gpu_trace = "gpu.txt"
-
+cpu0_trace = "cpu_0.txt"
+cpu1_trace = "cpu_1.txt"
+cpu2_trace = "cpu_2.txt"
+cpu3_trace = "cpu_3.txt"
 
 def main():
     
     # instantiate the object
     LLC     = LLC_Controller(llc_cache_size, ways, line_size, memory_size, llc_req_box_size, llc_min_delay, llc_max_delay, llc_mem_delay)
     GPU     = GPU_Controller(gpu_cache_size, ways, line_size, memory_size, gpu_trace)
-    CPU0    = CacheController(cpu_cache_size, Node.CPU0) # to fix: add line size and way
-    CPU1    = CacheController(cpu_cache_size, Node.CPU1) # to fix: add line size and way
-    CPU2    = CacheController(cpu_cache_size, Node.CPU2) # to fix: add line size and way
-    CPU3    = CacheController(cpu_cache_size, Node.CPU2) # to fix: add line size and way
+    CPU0    = CPU_Controller(cpu_cache_size, ways, line_size, memory_size, cpu0_trace, Node.CPU0) # to fix: add line size and way
+    CPU1    = CPU_Controller(cpu_cache_size, ways, line_size, memory_size, cpu1_trace, Node.CPU1) # to fix: add line size and way
+    CPU2    = CPU_Controller(cpu_cache_size, ways, line_size, memory_size, cpu2_trace, Node.CPU2) # to fix: add line size and way
+    CPU3    = CPU_Controller(cpu_cache_size, ways, line_size, memory_size, cpu3_trace, Node.CPU3)
     TPU     = Translation(LLC)
     # add devices to Map
     Device_Map = Map()

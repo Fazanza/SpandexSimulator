@@ -335,10 +335,12 @@ class CPU_Controller:
     # for getting response from LLC and CPU
     def receieve_rep_msg(self, msg):
         self.rep_msg_box.enqueue(msg)
+        return True
     
     # for getting request from LLC and CPU
     def receieve_req_msg(self, msg):
         self.req_msg_box.enqueue(msg)
+        return True
         
     def get_generated_msg(self):
         if self.generated_msg_queue.is_empty():

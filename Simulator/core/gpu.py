@@ -196,6 +196,7 @@ class GPU_Controller:
     # for getting response from LLC and CPU
     def receieve_rep_msg(self, msg):
         self.rep_msg_box.enqueue(msg)
+        return True
         
     def get_generated_msg(self):
         return self.generated_msg
