@@ -55,7 +55,7 @@ class llc_debug:
         line_state = self.llc.cache.line_state[index]
         line_tag = self.llc.cache.line_tag[index]
         for i in range(len(line_state)):
-            addr = line_tag[i] * self.gpu.cache.total_sets * self.gpu.cache.line_size + index * self.gpu.cache.line_size + offset
+            addr = line_tag[i] * self.llc.cache.total_sets * self.llc.cache.line_size + index * self.llc.cache.line_size + offset
             print(f"Addr : {addr}, Line State : {line_state[i]}")
             
 class gpu_debug:

@@ -7,8 +7,8 @@ from global_utility import *
 
 
 class req_msg:
-    def __init__(self, msg_type, addr, src, dst, ack_cnt, fwd_dst, time_stamp):
-        self.msg = Msg(msg_type, addr, src, dst, ack_cnt, fwd_dst)
+    def __init__(self, msg, time_stamp):
+        self.msg = Msg(msg.msg_type, msg.addr, msg.src, msg.dst, msg.ack_cnt, msg.fwd_dst, msg.target_addr)
         self.time_stamp = time_stamp
     
     def print_msg(self):

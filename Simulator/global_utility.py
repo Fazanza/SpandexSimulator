@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from collections import deque
 
 
 class Node(Enum):
@@ -48,14 +49,14 @@ class msg_type(Enum):
     Barrier = auto()
     
     # CPU message type
-    GetS = auto()
-    GetM = auto()
-    PutM = auto()
-    FwdGetS = auto()
-    FwdGetM = auto()
-    DataDir = auto() # data from LLC
-    DataOwner = auto() # data from Owner
-    PutAck = auto()
+    GetS = auto() # request from CPU
+    GetM = auto() # request from CPU
+    PutM = auto() # request from CPU
+    FwdGetS = auto() # request send to LLC
+    FwdGetM = auto() # request send to LLC
+    DataDir = auto() # response from LLC (data)
+    DataOwner = auto() # response from Owner / response send to other Node
+    PutAck = auto() # response from LLC
     Data = auto() # data from cpu to LLC
     
     ## temp state used in translation map, not any actual state in protocol
@@ -71,9 +72,26 @@ class type(Enum):
     Block = auto()
     Error = auto()
 
+class Inst_type(Enum):
+    Load = auto()
+    Store = auto()
+    Barrier = auto()
+
+class Inst():
+    def __init__(self, inst_type, addr, barrier_name):
+        self.inst_type = inst_type
+        self.addr = addr
+        self.barrier_name = barrier_name # name for barrier
+    
+    def print_Inst(self):
+        if self == None:
+            print(None)
+        else:
+            print(f"inst_type: {self.inst_type}, addr: {self.addr}, barrier_name: {self.barrier_name}")
+
 
 class Msg:
-    def __init__(self, msg_type, addr, src, dst, ack_cnt = 0, fwd_dst = None, target_addr = None):
+    def __init__(self, msg_type, addr, src, dst, ack_cnt = 0, fwd_dst = Node.NULL, target_addr = None):
         self.msg_type = msg_type
         self.addr = addr
         self.src = src
@@ -91,7 +109,7 @@ class Msg:
 
 class Queue:
     def __init__(self):
-        self.items = []
+        self.items = deque()
 
     def is_empty(self):
         """Check if the queue is empty."""
@@ -100,11 +118,15 @@ class Queue:
     def enqueue(self, item):
         """Add an item to the end of the queue."""
         self.items.append(item)
+    
+    def enqueue_front(self, item):
+        """Add an item to the end of the queue."""
+        self.items.appendleft(item)
 
     def dequeue(self):
         """Remove the item from the front of the queue and return it."""
         if not self.is_empty():
-            return self.items.pop(0)
+            return self.items.popleft()
         else:
             raise IndexError("dequeue from an empty queue")
 
@@ -121,12 +143,17 @@ class Queue:
 
     def clear(self):
         """Remove all items from the queue."""
-        self.items = []
+        self.items.clear()
+    
+    def is_member(self, element):
+        """Check if the element is in the queue."""
+        return element in self.items
     
     def print_all(self):
         print("#################### Queue ####################")
         for item in self.items:
             item.print_msg()
+
 
 
 class Map:

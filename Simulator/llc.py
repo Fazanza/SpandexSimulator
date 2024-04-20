@@ -158,7 +158,6 @@ class LLC_Controller:
     # if there is no empty way, first set evict addr to State.I and then put addr into cache
     def add_new_line(self, addr):
         if self.cache.addNewLine(addr) == True:
-            print(addr)
             self.cache.renewAccess(addr)
             return True
         else:
@@ -456,6 +455,9 @@ class LLC_Controller:
                 sharer = self.cache.get_sharer(msg_addr)
                 self.inv_cnt = len(sharer)
                 self.cache.clear_sharer(msg_addr)
+                for dst in sharer:
+                    msg = Msg(msg_type.Inv, msg_addr, Node.LLC, dst, 0, Node.NULL)
+                    self.generated_msg_queue.enqueue(msg)
             ###
             elif input_msg.msg_type == msg_type.ReqWB:
                 if msg_src == owner:
@@ -863,11 +865,11 @@ class LLC_Controller:
     
     # for getting new request from another node
     def receieve_req_msg(self, msg):
-        req_msg = req_msg(msg.msg_type, msg.addr, msg.src, msg.dst, msg.ackcnt, msg.fwd_dst, self.clk_cnt)
+        Req_msg = req_msg(msg, self.clk_cnt)
         if self.req_msg_box.is_full():
             return False
         else:
-            self.req_msg_box.enqueue(req_msg)
+            self.req_msg_box.enqueue(Req_msg)
             return True
     
     def get_generated_msg(self):
@@ -877,7 +879,7 @@ class LLC_Controller:
             return self.generated_msg_queue.peek()
         
     def take_generated_msg(self):
-        assert self.generated_msg_queue.is_empty() == False, "Error! Can not take instruction out from LLC generated msg queue"
+        assert self.generated_msg_queue.is_empty() == False, "Error! Can not take msg out from LLC generated msg queue"
         self.generated_msg_queue.dequeue()
     
     def LLC_run(self):
@@ -920,6 +922,6 @@ class LLC_Controller:
                 self.prev_req_blocked = req_msg
             else:
                 assert result != type.Error, "Error! LLC have error when to execute request"
-        
+
         ## clk_cnt ++
         self.clk_cnt = self.clk_cnt + 1
