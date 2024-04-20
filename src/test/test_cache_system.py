@@ -94,54 +94,87 @@ class TestCacheSystem(unittest.TestCase):
         # Instantiate CPU [L1]
         cache_ctrl = CacheController(20)
 
-        # # queue 1 message each to all queues
-        # inv_ack_message = Message(
-        #     mtype=MessageType.InvAck,
-        #     addr=0x1A2B3C4D,
-        #     src=Node.CPU2,
-        #     dest=Node.CPU1,
-        #     ackCnt=1  # Acknowledgement count example
-        # )
+        # setup cache
+        cache = cache_ctrl.cache
+        c1 = CacheEntry(0x1, State.SM_D, True, False, [0x01, 0x02, 0x03, 0x04])
+        c2 = CacheEntry(0x45, State.M, True, False, [0x05, 0x06, 0x07, 0x08])
+        c3 = CacheEntry(0x85, State.I, True, False, [0x11, 0x12, 0x13, 0x14])
+        c4 = CacheEntry(0x123, State.S, True, False, [0x0D, 0x0E, 0x0F, 0x10])
+        Cache.set_entry(cache, c1)
+        Cache.set_entry(cache, c2)
+        Cache.set_entry(cache, c3)
+        Cache.set_entry(cache, c4)
+        cache_ctrl.cache.print_contents()
+
+        cache_ctrl.setCPU() #parse mem traces
+        cache_ctrl.channels['instruction_in'].print_all_messages()
+
+        print("============SIMULATION START==================")
+        for _ in range(100):
+            clock.clockEdge()
+            print(f"===============CYCLE{clock.tick}===================")
+            cache_ctrl.runCPU()
+            #cache_ctrl.popInstructionQueue()
+            print(f"===================================================")
+
+
+        # # MESSAGE TEMPLATE
+        # # inv_ack_message = Message(
+        # #     mtype=MessageType.InvAck,
+        # #     addr=0x1A2B3C4D,
+        # #     src=Node.CPU2,
+        # #     dest=Node.CPU1,
+        # #     ackCnt=1  # Acknowledgement count example
+        # # )
 
         # fwd_gets_message = Message(
-        #     mtype=MessageType.GetS,
-        #     addr=0x1A2B3C4D,
-        #     src=Node.CPU1,
-        #     dest=Node.CPU0,
-        #     fwd_dest=Node.CPU0  # Forward to CPU0
+        #     msg_type=MessageType.FwdGetS,
+        #     addr=0x1,
+        #     src=Node.LLC,
+        #     dst=Node.CPU0,
+        #     fwd_dst=Node.CPU1  # Forward to CPU0
         # )
 
         # load_message = Message(
-        #     mtype=MessageType.LD,
-        #     addr=0x1A2B3C4D,
-        #     src=Node.NULL,
-        #     dest=Node.CPU0,
-        #     data_block=[0xDE, 0xAD, 0xBE, 0xEF]  # Example data block
+        #     msg_type=MessageType.FwdGetM,
+        #     addr=0x50,
+        #     src=Node.LLC,
+        #     dst=Node.CPU0,
+        #     fwd_dst=Node.CPU2  # Forward to CPU0
+        #     #data_block=[0xDE, 0xAD, 0xBE, 0xEF]  # Example data block
         # )
-        #cache_ctrl.channels['response_in'].send_message(inv_ack_message)
-        #cache_ctrl.channels['forward_in'].send_message(fwd_gets_message)
-        #cache_ctrl.channels['instruction_in'].send_message(load_message)
 
-        cache_ctrl.setCPU()
-        cache_ctrl.channels['instruction_in'].print_all_messages()
-        cache_ctrl.print_barriers()
-        # cache_ctrl.handle_instruction()
-        # cache_ctrl.handle_instruction()
-        # cache_ctrl.handle_instruction()
-        # print(cache_ctrl.channels['instruction_in'])
+        # # cache_ctrl.channels['response_in'].send_message(inv_ack_message)
+        # cache_ctrl.channels['request_in'].send_message(fwd_gets_message)
+        # cache_ctrl.channels['request_in'].send_message(load_message)
+        # # cache_ctrl.channels['instruction_in'].send_message(load_message)
 
+        # cache_ctrl.setCPU()
+        # cache_ctrl.channels['request_in'].print_all_messages()
+        # cache_ctrl.channels['instruction_in'].print_all_messages()
+        # cache_ctrl.print_barriers()
+        # # cache_ctrl.handle_instruction()
+        # # cache_ctrl.handle_instruction()
+        # # cache_ctrl.handle_instruction()
+        # # print(cache_ctrl.channels['instruction_in'])
+
+        # print("============SIMULATION START==================")
         # for _ in range(5):
         #     clock.clockEdge()
         #     cache_ctrl.runCPU()
-        #     # for debugging
-        #     cache_ctrl.channels['instruction_in'].print_all_messages()
+        # #     # for debugging
+        # #     cache_ctrl.channels['instruction_in'].print_all_messages()
 
-        # cache_ctrl.popInstructionQueue()
+        # cache_ctrl.popRequestQueue()
+        # print("============POP REQUEST QUEUE=====================")
         # for _ in range(5):
         #     clock.clockEdge()
-        #     cache_ctrl.runL1Controller()
-        #     # for debugging
-        #     cache_ctrl.channels['instruction_in'].print_all_messages()
+        #     cache_ctrl.runCPU()        
+        # # for _ in range(5):
+        # #     clock.clockEdge()
+        # #     cache_ctrl.runL1Controller()
+        # #     # for debugging
+        # #     cache_ctrl.channels['instruction_in'].print_all_messages()
 
     def test_tbe(self):
         # Instantiate tbeTable and add some test cases
@@ -296,6 +329,67 @@ class TestCacheSystem(unittest.TestCase):
         print(comm_system.get_generated_msg())
         
 
+    def test_instruction_queue(self):
+        clock = Clock()
+        for i in range(100):
+            clock.clockEdge()
+
+        # Instantiate CPU [L1]
+        cache_ctrl = CacheController(20)
+
+        # setup cache
+        cache = cache_ctrl.cache
+        c1 = CacheEntry(0x1, State.SM_D, True, False, [0x01, 0x02, 0x03, 0x04])
+        c2 = CacheEntry(0x45, State.M, True, False, [0x05, 0x06, 0x07, 0x08])
+        c3 = CacheEntry(0x85, State.I, True, False, [0x11, 0x12, 0x13, 0x14])
+        c4 = CacheEntry(0x123, State.S, True, False, [0x0D, 0x0E, 0x0F, 0x10])
+        Cache.set_entry(cache, c1)
+        Cache.set_entry(cache, c2)
+        Cache.set_entry(cache, c3)
+        Cache.set_entry(cache, c4)
+        cache_ctrl.cache.print_contents()
+
+        cache_ctrl.setCPU() #parse mem traces
+        cache_ctrl.channels['instruction_in'].print_all_messages()
+
+        print("============SIMULATION START==================")
+        for _ in range(100):
+            clock.clockEdge()
+            print(f"===============CYCLE{clock.tick}===================")
+            cache_ctrl.runCPU()
+            #cache_ctrl.popInstructionQueue()
+            print(f"===================================================")
+
+    def test_response_queue(self):
+        clock = Clock()
+        for i in range(100):
+            clock.clockEdge()
+
+        # Instantiate CPU [L1]
+        cache_ctrl = CacheController(20)
+
+        # setup cache
+        cache = cache_ctrl.cache
+        c1 = CacheEntry(0x1, State.SM_D, True, False, [0x01, 0x02, 0x03, 0x04])
+        c2 = CacheEntry(0x45, State.M, True, False, [0x05, 0x06, 0x07, 0x08])
+        c3 = CacheEntry(0x85, State.I, True, False, [0x11, 0x12, 0x13, 0x14])
+        c4 = CacheEntry(0x123, State.S, True, False, [0x0D, 0x0E, 0x0F, 0x10])
+        Cache.set_entry(cache, c1)
+        Cache.set_entry(cache, c2)
+        Cache.set_entry(cache, c3)
+        Cache.set_entry(cache, c4)
+        cache_ctrl.cache.print_contents()
+
+        cache_ctrl.setCPU() #parse mem traces
+        cache_ctrl.channels['instruction_in'].print_all_messages()
+
+        print("============SIMULATION START==================")
+        for _ in range(100):
+            clock.clockEdge()
+            print(f"===============CYCLE{clock.tick}===================")
+            cache_ctrl.runCPU()
+            #cache_ctrl.popInstructionQueue()
+            print(f"===================================================")
    
 # Run tests
 if __name__ == '__main__':

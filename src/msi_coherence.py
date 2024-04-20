@@ -90,7 +90,7 @@ class Event(Enum):
 class tbe:
     def __init__(self, state):
         self.state = state #state of cache line
-
+        #self.ackCnt
     def __repr__(self):
         return (f"tr : State={self.state}")
 
@@ -100,16 +100,18 @@ class tbeTable:
     def __init__(self):
         self.entries = {}
 
+    #def isValid(self,tbe)
+
     def lookup(self, addr):
         if self.is_present(addr):
             print("TBE entry not found.")
         else:
             return self.entries.get(addr, None)
 
-    def allocate(self, addr, cache_entry):
+    def allocate(self, addr):
         # Allocate a new tbe entry for the given address. 
         if addr not in self.entries:
-            self.entries[addr] = cache_entry
+            self.entries[addr] = tbe(cache_entry.state)
         return self.entries[addr]
 
     def deallocate(self, addr):
@@ -142,7 +144,7 @@ class CacheEntry:
     def __str__(self):
         return f"Addr: {hex(self.address)}, State: {self.state}, isValid: {self.isValid}, data_block: {self.data_block}"
 
-
+# Used for only modifying inside cache
 class Cache: #currently assumes fully-associative
     def __init__(self, size):
         # collection of cache entry
@@ -154,19 +156,6 @@ class Cache: #currently assumes fully-associative
     def get_entry(self, address):
         base_address = address & ~0x3F
         return self.entries.get(base_address)
-
-    # def set_entry(self, cache_entry):
-    #     base_address = cache_entry.address & ~0x3F  # Ensure the address is aligned
-    #     if base_address in self.entries:
-    #         print("Cahce Line exists, rewriting")
-    #         # check for cache write access
-    #         # State.M?
-    #         self.entries[base_address] = cache_entry
-    #         self.setMRU(cache_entry)
-    #     else:
-    #         # Add the new cache entry if it does not exist
-    #         self.entries[base_address] = cache_entry
-    #         self.setMRU(cache_entry)
 
     def set_entry(self, cache_entry):
         base_address = cache_entry.address & ~0x3F  # Ensure the address is aligned
@@ -190,8 +179,6 @@ class Cache: #currently assumes fully-associative
             if not entry.isValid:
                 return True  # Found an available cache line
         return False  # No available cache line, all are valid and in use
-    # def is_cache_available(self):
-    #     return len(self.entries) < self.size
 
     def evict_cache_entry(self):
         # Evict the least recently used cache entry
@@ -272,17 +259,22 @@ class CacheController:
                 #     continue  # Skip to the next channel
                 all_busy = False  # At least one channel is ready to be processed
                 if channel_key == 'response_in':
-                    self.handle_responses()
-                elif channel_key == 'request_in':
+                    if not self.channels[channel_key].transaction_ongoing:
+                        self.handle_responses()
+                    else:
+                        print("Transaction ongoing in response_in channel.")
+                elif channel_key == 'request_in'and not self.channels[channel_key].transaction_ongoing:
                     self.handle_forwards()
                 elif channel_key == 'instruction_in':
                     if self.encounter_barrier is not None:
                         self.encounter_barrier = None #reset barrier flag
+                        self.handle_instruction()
                     else:
                         self.handle_instruction()
             else:
                 if channel_key == 'instruction_in':
                     print(f"{self.deviceID} run end")
+                    return None
                 print(f"{channel_key} is empty. Moving to the next channel.")
         if all_busy:
             print("All channels are busy. Stalling for this cycle.")
@@ -302,15 +294,17 @@ class CacheController:
 
         # if response sender is directory
         if msg.src is self.dirID:
-            if msg.msg_type is not MessageType.DataDir:
+            if msg.msg_type is MessageType.PutAck:
+                self.trigger(Event.PutAck, msg.addr, entry, msg)   
+            elif msg.msg_type is MessageType.DataDir:
                 raise ValueError("Directory should only reply with data")
                 self.trigger(Event.DataDir, msg.addr, entry, msg)
         # if sender is another cache
         else:
             if msg.msg_type is MessageType.DataOwner:
                 self.trigger(Event.DataOwner, msg.addr, entry, msg)
-        # if no messages to process, go to next message queue to process
-        # self.handle_forwards()
+        else:
+            raise ValueError("Unexpected forward message type.")
 
     def handle_forwards(self):
         channel = self.channels['request_in']
@@ -319,19 +313,18 @@ class CacheController:
         channel.transaction_ongoing = True # set flag to indicate transaction is ongoing
         entry = self.cache.get_entry(msg.addr)
         #tbe = self.tbes.entries[msg.addr]
-
+        tbe = self.tbes.lookup(msg.addr)
+        
         if msg.msg_type is MessageType.FwdGetS:
+            assert entry is not None, "FwdGetS must access valid entry"
             self.trigger(Event.FwdGetS, msg.addr, entry, msg)
         elif msg.msg_type is MessageType.FwdGetM:
             self.trigger(Event.FwdGetM, msg.addr, entry, msg)
         elif msg.msg_type is MessageType.Inv:
             self.trigger(Event.Inv, msg.addr, entry, msg)
-        elif msg.msg_type is MessageType.PutAck:
-            self.trigger(Event.PutAck, msg.addr, entry, msg)            
         else:
             raise ValueError("Unexpected forward message type.")
-        # if no messages to process, go to next message queue to process
-        # self.handle_instruction()
+
 
     def handle_instruction(self):
         channel = self.channels['instruction_in']
@@ -343,9 +336,6 @@ class CacheController:
         # first check for barrier
         # BARRIER
         # while being stuck, need to keep track of other processor's barrier encounter
-        # you shouldn't run this code until the processor knows the count is 0
-
-
         if msg.msg_type is MessageType.Barrier:
             # should be popped once barrier is cleared, until then, reference for count
             #barrier = self.barriers.popleft() 
@@ -365,32 +355,31 @@ class CacheController:
                 channel.transaction_ongoing = False # go to next inst
             # in next tick we can still process resp_in 
             # but will have to wait until barrier is cleared
-        
-        else:
-            entry = self.cache.get_entry(msg.addr) # what if the entry is not in cache?
-            #tbe = self.tbes.entries[msg.addr]
+        else :
+            if channel.transaction_ongoing is True:
+                print("transation in inst queue onging")
+            else:
+                entry = self.cache.get_entry(msg.addr) 
+                #tbe = self.tbes.entries[msg.addr]
 
-            # if miss and cache full --> first thing to check to handle to Replacement event
-            #if not entry.isValid and not self.cache.is_cache_available(msg.addr):
-            if not entry.isValid and not self.cache.is_cache_available():
-            # if entry.state is State.I and not self.cache.is_cache_available(msg.addr):
-                # get replacement address from cache
-                replacement_addr = self.cache.getReplacementAddr()
-                replacement_entry = self.cache.get_entry(replacement_addr)
-                self.trigger(Event.Replacement, replacement_addr, replacement_entry, msg)
+                # if miss and cache full --> first thing to check to handle to Replacement event
+                #if not entry.isValid and not self.cache.is_cache_available(msg.addr):
+                if not entry.isValid and not self.cache.is_cache_available():
+                # if entry.state is State.I and not self.cache.is_cache_available(msg.addr):
+                    # get replacement address from cache
+                    replacement_addr = self.cache.getReplacementAddr()
+                    replacement_entry = self.cache.get_entry(replacement_addr)
+                    self.trigger(Event.Replacement, replacement_addr, replacement_entry, msg)
 
-            else: # now we assume entry is valid
-                if msg.msg_type is MessageType.Load:
-                    self.trigger(Event.Load, msg.addr, entry, msg)
-                    channel.transaction_ongoing = True 
-
-                elif msg.msg_type is MessageType.Store:
-                    self.trigger(Event.Store, msg.addr, entry, msg)
-                    channel.transaction_ongoing = True 
-                else:
-                    raise ValueError("Unexpected request type from processor")   
-    
-
+                else: # now we assume entry is valid
+                    if msg.msg_type is MessageType.Load:
+                        channel.transaction_ongoing = True 
+                        self.trigger(Event.Load, msg.addr, entry, msg)
+                    elif msg.msg_type is MessageType.Store:
+                        channel.transaction_ongoing = True 
+                        self.trigger(Event.Store, msg.addr, entry, msg)
+                    else:
+                        raise ValueError("Unexpected request type from processor")   
 
 ## EVENT TRIGGER    
     # trigger will cause state transition and will result in action
@@ -440,16 +429,19 @@ class CacheController:
     def sendGetS(self, addr):
         out_msg = Message(msg_type = MessageType.GetS, addr = addr, src = self.deviceID, dst = self.dirID) 
         self.channels["request_out"].send_message(out_msg)
+        out_msg.print_msg()
         print("GetS message sent for read access.")
 
     def sendGetM(self, addr):
         out_msg = Message(msg_type = MessageType.GetM, addr = addr, src = self.deviceID, dst = self.dirID)
         self.channels["request_out"].send_message(out_msg)
+        out_msg.print_msg()
         print("GetM message sent to fetch exclusive access.")
 
     def sendPutM(self, addr, cache_entry):
         out_msg = Message(msg_type = MessageType.PutM, addr = addr, src = self.deviceID, dst = self.dirID)
         self.channels["request_out"].send_message(out_msg)
+        out_msg.print_msg()
         print("PutM message sent to evict block from modified state.")
 
     # Cache
@@ -465,21 +457,28 @@ class CacheController:
     def writeDataToCache(self, message, cache_entry):
         #cache_entry.data_block = message.data_block
         self.cache.set_entry(cache_entry)
-        print("Data written to cache block.")
+        print("===========================================")
+        print(f"Data written to cache block at {cache_entry.addr}")
+        print("=================================================")
 
     def sendCacheDataToReq(self, message):
-        out_msg = Message(msg_type = MessageType.DataOwner, addr = message.addr, src=self.deviceID, dst = message.fwd_dest) #destination node?
-        self.channels["response_out"].enqueue(out_msg)        
-        print("Cache data sent to requestor.")
-
+        out_msg = Message(msg_type = MessageType.DataOwner, addr = message.addr, src=self.deviceID, dst = message.fwd_dst) #destination node?
+        self.channels["response_out"].send_message(out_msg)  
+        print("=========Cache data sent to requestor=============")
+        out_msg.print_msg()  
+        print("=================================================")
+    
     def sendCacheDataToDir(self, message):
         out_msg = Message(msg_type = MessageType.Data, addr = message.addr, src=self.deviceID, dst = self.dirID)
-        self.channels["response_out"].enqueue(out_msg)
-        print("Cache data sent to directory.")
+        self.channels["response_out"].send_message(out_msg)
+        print("=========Cache data sent to directory.=============") 
+        out_msg.print_msg()
+        print("=================================================")
 
     def sendInvAcktoDir(self, addr):
         out_msg = Message(msg_type = MessageType.InvAck, addr = addr, src=self.deviceID, dst = self.dirID)
-        self.channels["response_out"].enqueue(out_msg)
+        self.channels["response_out"].send_message(out_msg)
+        out_msg.print_msg()
         print("Invalidation Ack sent to requestor.")
 
 
@@ -500,18 +499,21 @@ class CacheController:
         self.channels["request_in"].transaction_ongoing = False
         print("Request queue popped for processing.")
     
-    def stall():
+    def stall(self):
         print("Stalling: Unsupported event in current state.")
         return None
 
 ## STATE TRANSITION
+
+    # def getState(self, tbe, cache_entry, addr):
+    #     if is_valid(tbe):
+    #         return tbe.
+
+
     # process event and do state transition
     def doTransition(self, event, addr, cache_entry, message=None, tbe=None):
         print(f"Processing event: {event} in state: {cache_entry.state}")
-        print(cache_entry)
-        print(event)
-        print ("TYPE MISMATCH CHECK")
-        print(f"cache_entry.state: {cache_entry.state}, State.I: {State.I}")
+
         #print(f"Type of cache_entry.state: {type(cache_entry.state)}, Type of State.I: {type(State.I)}")
 
         ## define state transition
@@ -534,11 +536,13 @@ class CacheController:
                 print("Transition from I to IM_D state: Store request received in Invalid state.")
             elif event is Event.Inv:
                 self.sendInvAcktoDir(addr)
-                self.popRequestQueue()                
+                self.popRequestQueue()           
+            else:
+                raise ValueError(f"Unexpected Message in addr {addr}. Current state {cache_entry.state}")     
 
         elif cache_entry.state in [State.IS_D, State.IM_D] :
             if event in [Event.Load, Event.Store, Event.Replacement]:
-                self.stall
+                self.stall()
             elif event is Event.Inv:
                 self.sendInvAcktoDir(addr)
                 self.popRequestQueue()                
@@ -551,6 +555,8 @@ class CacheController:
                 self.loadMiss()
                 self.popInstructionQueue()  
                 print("Transition to Shared state: Data received from LLC.")
+            else:
+                raise ValueError(f"Unexpected Message in addr {addr}. Current state {cache_entry.state}")
 
         elif cache_entry.state is State.IM_D:
             if event in [Event.DataDir, Event.DataOwner]:
@@ -560,6 +566,8 @@ class CacheController:
                 self.popInstructionQueue()
                 self.popResponseQueue()    
                 print("Transition to M state: Data received")
+            else:
+                raise ValueError(f"Unexpected Message in addr {addr}. Current state {cache_entry.state}")
 
         elif cache_entry.state is State.S:
             if event is Event.Load:
@@ -580,18 +588,20 @@ class CacheController:
                 self.sendInvAcktoDir(addr)
                 self.popRequestQueue() #response queue
                 print("Transition to I state: Invalidation request received in Shared state.")
-        
+            else:
+                raise ValueError(f"Unexpected Message in addr {addr}. Current state {cache_entry.state}")
         
         elif cache_entry.state is State.SM_D:
             if event is Event.Load:
                 self.loadHit(cache_entry)
-                self.popInstructionQueue()                    
+                self.popInstructionQueue()    
+                print("Processed Load event in SM_D state.")                           
             elif event in [Event.Store, Event.Replacement, Event.FwdGetS, Event.FwdGetM]:
-                self.stall            
+                self.stall()           
             elif event is Event.Inv:
                 cache_entry.state = State.IM_D
                 self.sendInvAcktoDir(addr)
-                self.popRequestQueue()                
+                self.popRequestQueue()     
             elif event is Event.DataDir:  
                 cache_entry.state = State.M
                 self.deallocateTBE(addr)
@@ -599,15 +609,18 @@ class CacheController:
                 self.popInstructionQueue()
                 self.popResponseQueue()    
                 print("Transition to M state: Ownership received")
+            else:
+                raise ValueError(f"Unexpected Message in addr {addr}. Current state {cache_entry.state}")
 
         elif cache_entry.state is State.M:
             if event is Event.Load:
                 self.loadHit(cache_entry)
-                self.popInstructionQueue()                
+                self.popInstructionQueue()    
+                print("Processed Load event in M state.")                
             elif event is Event.Store:
                 self.storeHit(cache_entry)
                 self.popInstructionQueue()
-                print("Processing Store event in Modified state.")
+                print("Processed Store event in Modified state.")
             elif event is Event.Replacement:
                 cache_entry.state = State.MI_A
                 self.sendPutM(addr, cache_entry)
@@ -619,16 +632,19 @@ class CacheController:
                 print("Processing FwdGetS event in Modified state.")
             elif event is Event.FwdGetM:
                 cache_entry.state = State.I
-                print("Processing FwdGetM event in Modified state.")
+                print("Processing FwdGetM event in Modified state, transition to I")
                 self.sendCacheDataToReq(message)
                 self.popRequestQueue()
             elif event is Event.Inv:
                 self.sendInvAcktoDir(addr)   
-                self.popRequestQueue()                             
+                self.popRequestQueue()      
+                print("Processed Inv event in Modified state")  
+            else:
+                raise ValueError(f"Unexpected Message in addr {addr}. Current state {cache_entry.state}")                     
 
         elif cache_entry.state in [State.MI_A, State.SI_A, State.II_A]:
             if event in [Event.Load, Event.Store, Event.Replacement]:
-                self.stall
+                self.stall()
             elif event is Event.PutAck:
                 cache_entry.state = State.I
                 print("Transition to I state: PutAck received.")
@@ -648,7 +664,9 @@ class CacheController:
                 self.popRequestQueue()
             elif event is Event.Inv:
                 self.sendInvAcktoDir(addr)       
-                self.popRequestQueue()                             
+                self.popRequestQueue()    
+            else:
+                raise ValueError(f"Unexpected Message in addr {addr}. Current state {cache_entry.state}")                         
 
         elif cache_entry.state is State.SI_A:
             if event is Event.Inv:
@@ -656,11 +674,15 @@ class CacheController:
                 print("Transition to II_A state: Invalidating cache block.")
                 self.sendInvAcktoDir(addr)
                 self.popRequestQueue()
+            else:
+                raise ValueError(f"Unexpected Message in addr {addr}. Current state {cache_entry.state}")
 
         elif cache_entry.state is State.II_A:
             if event is Event.Inv:
                 self.sendInvAcktoDir(addr)   
                 self.popRequestQueue() 
+            else:
+                raise ValueError(f"Unexpected Message in addr {addr}. Current state {cache_entry.state}")
 
 ## BARRIER HANDLING
     def print_barriers(self):
@@ -693,7 +715,6 @@ class CacheController:
                 break  # Exit the loop after updating the barrier
         else:
             print(f"No barrier found with ID {CPU_barrier}")
-
 
 
 ## OUTPUT INTERFACE

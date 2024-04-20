@@ -19,8 +19,7 @@ class Parser:
         }
         if deviceID in device_mapping:
             return device_mapping[deviceID]
-        else:
-            raise ValueError(f"Unknown device type: {device_str}")
+
 
     # Read 1 Trace Line and 
     # Return Corresponding Messages
@@ -90,8 +89,10 @@ class Parser:
     
     def get_file_path(self, deviceID):
         # need to file_name for device - given from cache controller Device Type
-        #file_name = self.parse_device_type(deviceID+'.txt')
-        file_name = 'memory_trace_toy.txt'
+        device_name = self.parse_device_type(deviceID)
+        file_name = device_name+'.txt'
+        print(file_name)
+        # file_name = 'memory_trace_toy.txt'
 
         # get file path
         src_directory = os.getcwd()
