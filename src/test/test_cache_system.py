@@ -362,9 +362,7 @@ class TestCacheSystem(unittest.TestCase):
 
     def test_response_queue(self):
         clock = Clock()
-        for i in range(100):
-            clock.clockEdge()
-
+        
         # Instantiate CPU [L1]
         cache_ctrl = CacheController(20)
 
@@ -380,7 +378,7 @@ class TestCacheSystem(unittest.TestCase):
         Cache.set_entry(cache, c4)
         cache_ctrl.cache.print_contents()
 
-        cache_ctrl.setCPU() #parse mem traces
+        # cache_ctrl.setCPU() #parse mem traces
         cache_ctrl.channels['instruction_in'].print_all_messages()
 
         print("============SIMULATION START==================")

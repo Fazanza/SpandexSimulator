@@ -303,8 +303,7 @@ class CacheController:
         else:
             if msg.msg_type is MessageType.DataOwner:
                 self.trigger(Event.DataOwner, msg.addr, entry, msg)
-        else:
-            raise ValueError("Unexpected forward message type.")
+
 
     def handle_forwards(self):
         channel = self.channels['request_in']
