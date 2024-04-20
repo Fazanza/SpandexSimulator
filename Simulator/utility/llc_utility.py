@@ -2,13 +2,68 @@ import math
 from enum import Enum, auto
 import random
 from collections import deque
-from gpu_header import *
-from global_utility import *
+from header.llc_header import *
+from utility.global_utility import *
 
 
-## for GPU cache
-## 1. if evicted, no wb will be happen, just invalidate the line
-class GPU_cache:
+class req_msg:
+    def __init__(self, msg, time_stamp):
+        self.msg = Msg(msg.msg_type, msg.addr, msg.src, msg.dst, msg.ack_cnt, msg.fwd_dst, msg.target_addr)
+        self.time_stamp = time_stamp
+    
+    def print_msg(self):
+            if self == None:
+                print(None)
+            else:
+                print(f"msg_type: {self.msg.msg_type}, addr: {self.msg.addr}, time_stamp: {self.time_stamp}, src: {self.msg.src}, dst: {self.msg.dst}, fwd_dst: {self.msg.fwd_dst}, ack_cnt: {self.msg.ack_cnt}")
+
+class MessageBuffer:
+    def __init__(self, max_size):
+        self.max_size = max_size
+        self.buffer = []
+
+    def enqueue(self, message):
+        if len(self.buffer) < self.max_size:
+            self.buffer.append(message)
+
+    def dequeue(self):
+        if self.buffer:
+            return self.buffer.pop(0)
+
+    def is_empty(self):
+        return len(self.buffer) == 0
+    
+    def get_content(self):
+        return self.buffer
+    
+    def is_full(self):
+        if len(self.buffer) >= self.max_size:
+            return True
+        else:
+            return False
+        
+    def remove(self, element):
+        self.buffer.remove(element)
+
+    def peek(self):
+        if not self.is_empty():
+            return self.buffer[0]
+        else:
+            raise IndexError("peek from an empty queue")
+
+    def clear(self):
+        self.buffer.clear()
+
+    def size(self):
+        return len(self.buffer)
+
+    def print_all(self):
+        print("Request message box")
+        for item in self.buffer:
+            item.print_msg()
+
+
+class dir_cache:
     cache_size = 0 # number of words in whole cache
     memory_size = 0 # number of words in whole memory
     line_size = 0 # number of words in a line
@@ -16,7 +71,10 @@ class GPU_cache:
     total_sets = 0 # number of sets in cache
     line_state = []
     words_state = []
+    owner = []
+    sharer = []
     line_tag = []
+    msg_dst = []
     addr_bits = 0
     index_bits = 0
     tag_bits = 0
@@ -37,8 +95,10 @@ class GPU_cache:
         self.tag_bits = self.addr_bits - self.index_bits - self.offset_bits
         self.line_state = [[State.I for j in range(self.ways)] for k in range(self.total_sets)]
         self.words_state = [[[State.I for i in range(self.line_size)] for j in range(self.ways)] for k in range(self.total_sets)]
-        self.line_tag = [[0 for j in range(self.ways)] for k in range(self.total_sets)]
-
+        self.owner = [[Node.MEM for j in range(self.ways)] for k in range(self.total_sets)]
+        self.sharer = [[[] for j in range(self.ways)] for k in range(self.total_sets)]
+        self.line_tag = [[-1 for j in range(self.ways)] for k in range(self.total_sets)]
+        self.msg_dst= [[Node.NULL for j in range(self.ways)] for k in range(self.total_sets)]
     ## Separate address into tag, index and offset
     def parseAddr(self, addr):
         tag = addr >> (self.index_bits + self.offset_bits)
@@ -66,7 +126,7 @@ class GPU_cache:
             ##updateAccesing
             return self.words_state[index][match_way][offset]
     
-    def getState_all_word(self, addr):
+    def getState_allword(self, addr):
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
         # miss
@@ -84,9 +144,9 @@ class GPU_cache:
             return State.I
         else:
             ##updateAccesing
-            return self.words_state[index][match_way]
+            return self.line_state[index][match_way]
 
-     ## Only use when making sure the address is in cache
+    ## Only use when making sure the address is in cache
     def updateState_word(self, addr, new_state):
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
@@ -119,6 +179,44 @@ class GPU_cache:
             for i in range(len(self.words_state[index][match_way])):
                 self.words_state[index][match_way][i] = new_state
 
+    def updateOwner(self, addr, new_owner):
+        tag, index, offset = self.parseAddr(addr)
+        match_way = self.searchSet(index, tag)
+        ## only use updateState when the line exist in cache
+        if (match_way == -1):
+            print("Error! line miss in cache during updating owner")
+            quit()
+        else:
+            self.owner[index][match_way] = new_owner
+
+    def getOwner(self, addr):
+        tag, index, offset = self.parseAddr(addr)
+        match_way = self.searchSet(index, tag)
+        if (match_way == -1):
+            #print("Error! line miss in cache during getting owner")
+            return Node.MEM
+        else:
+            return self.owner[index][match_way]
+        
+    def updateMsgDst(self, addr, new_dst):
+        tag, index, offset = self.parseAddr(addr)
+        match_way = self.searchSet(index, tag)
+        ## only use updateState when the line exist in cache
+        if (match_way == -1):
+            print("Error! line miss in cache during updating msg dst")
+            quit()
+        else:
+            self.msg_dst[index][match_way] = new_dst
+
+    def getMsgDst(self, addr):
+        tag, index, offset = self.parseAddr(addr)
+        match_way = self.searchSet(index, tag)
+        if (match_way == -1):
+            print("Error! line miss in cache during getting msg dst")
+            quit()
+        else:
+            return self.msg_dst[index][match_way]
+
     ## Adding new address line into cache but need to modified state later
     def addNewLine(self, addr):
         tag, index, offset = self.parseAddr(addr)
@@ -129,7 +227,7 @@ class GPU_cache:
         for i in range(self.ways):
             line_occupied = False
             for j in range(self.line_size):
-                if(self.words_state[index][i][j] != State.I):
+                if(self.words_state[index][i][j] != State.I or self.line_state[index][i] != State.I):
                     line_occupied = True
                     break
             if not line_occupied:
@@ -142,6 +240,31 @@ class GPU_cache:
             self.renewAccess(addr)
             return True
 
+    def clear_sharer(self, addr):
+        tag, index, offset = self.parseAddr(addr)
+        match_way = self.searchSet(index, tag)
+        if match_way == -1:
+            print("Error! line miss in cache during clear sharer")
+        else:
+            self.sharer[index][match_way] = []
+
+    def add_sharer(self, addr, src):
+        tag, index, offset = self.parseAddr(addr)
+        match_way = self.searchSet(index, tag)
+        if match_way == -1:
+            print("Error! line miss in cache during clear sharer")
+            quit()
+        else:
+            self.sharer[index][match_way].append(src)
+
+    def get_sharer(self, addr):
+        tag, index, offset = self.parseAddr(addr)
+        match_way = self.searchSet(index, tag)
+        if match_way == -1:
+            print("Error! line miss in cache during clear sharer")
+        else:
+            return self.sharer[index][match_way]
+
     ## Only use when making sure the address is in cache
     def renewAccess(self, addr):
         tag, index, offset = self.parseAddr(addr)
@@ -151,22 +274,27 @@ class GPU_cache:
             quit()
         temp_word_state = self.words_state[index][match_way][:]
         temp_line_state = self.line_state[index][match_way]
+        temp_sharer = self.sharer[index][match_way][:]
+        temp_owner = self.owner[index][match_way]
+        temp_msg_dst = self.msg_dst[index][match_way]
         for i in range(match_way):
-            self.line_state[index][i+1] = self.line_state[index][i]
             self.words_state[index][i+1] = self.words_state[index][i][:]
+            self.line_state[index][i+1] = self.line_state[index][i]
             self.line_tag[index][i+1] = self.line_tag[index][i]
-        self.line_state[index][0] = temp_line_state
+            self.sharer[index][i+1] = self.sharer[index][i][:]
+            self.owner[index][i+1] = self.owner[index][i]
+            self.msg_dst[index][i+1] = self.msg_dst[index][i]
         self.words_state[index][0] = temp_word_state[:]
+        self.line_state[index][0] = temp_line_state
         self.line_tag[index][0] = tag
+        self.sharer[index][0] = temp_sharer
+        self.owner[index][0] = temp_owner
+        self.msg_dst[index][0] = temp_msg_dst
 
     ## Return LRU tag and state
     ## Only use when eviction is required
     def getLRU(self, addr):
         tag, index, offset = self.parseAddr(addr)
         LRUtag = self.line_tag[index][self.ways-1]
-        LRUaddr = LRUtag * self.total_sets * self.line_size - index * self.line_size
-        return LRUaddr, self.line_state[index][self.ways-1], self.words_state[index][self.ways-1][:]
-    
-    def clear(self):
-        self.line_state = [[State.I for j in range(self.ways)] for k in range(self.total_sets)]
-        self.words_state = [[[State.I for i in range(self.line_size)] for j in range(self.ways)] for k in range(self.total_sets)]
+        LRUaddr = LRUtag * self.total_sets * self.line_size + index * self.line_size + offset
+        return LRUaddr, self.line_state[index][self.ways-1], self.words_state[index][self.ways-1][:], self.words_state[index][self.ways-1][:], self.owner[index][self.ways-1]
