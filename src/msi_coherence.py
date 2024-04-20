@@ -274,7 +274,7 @@ class CacheController:
             else:
                 if channel_key == 'instruction_in':
                     print(f"{self.deviceID} run end")
-                    return None
+                    return None #At top level if None received, it indicates the program stopped running
                 print(f"{channel_key} is empty. Moving to the next channel.")
         if all_busy:
             print("All channels are busy. Stalling for this cycle.")
@@ -297,8 +297,9 @@ class CacheController:
             if msg.msg_type is MessageType.PutAck:
                 self.trigger(Event.PutAck, msg.addr, entry, msg)   
             elif msg.msg_type is MessageType.DataDir:
-                raise ValueError("Directory should only reply with data")
                 self.trigger(Event.DataDir, msg.addr, entry, msg)
+            else:
+                raise ValueError("Directory should only reply with data")
         # if sender is another cache
         else:
             if msg.msg_type is MessageType.DataOwner:
@@ -422,7 +423,7 @@ class CacheController:
 
     def storeMiss(self):
 
-        print("Hit miss processed.")
+        print("Store miss processed.")
 
     # Send request to directory
     def sendGetS(self, addr):
@@ -513,7 +514,7 @@ class CacheController:
     def doTransition(self, event, addr, cache_entry, message=None, tbe=None):
         print(f"Processing event: {event} in state: {cache_entry.state}")
 
-        #print(f"Type of cache_entry.state: {type(cache_entry.state)}, Type of State.I: {type(State.I)}")
+        print(f"Type of cache_entry.state: {type(cache_entry.state)}, Type of event: {type(event)}")
 
         ## define state transition
         ## transition (cur_state, event, next_state) --> action
@@ -559,6 +560,7 @@ class CacheController:
 
         elif cache_entry.state is State.IM_D:
             if event in [Event.DataDir, Event.DataOwner]:
+                print("check IM_D")
                 cache_entry.state = State.M
                 self.deallocateTBE(addr)
                 self.storeMiss()
@@ -574,7 +576,7 @@ class CacheController:
                 self.popInstructionQueue()            
             elif event is Event.Store:
                 cache_entry.state = State.SM_D
-                allocateTBE(addr, cache_entry)
+                self.allocateTBE(addr, cache_entry)
                 self.sendGetM(addr)
                 print("Transition to SM_AD state: Store request received in Shared state.")
             # no explicit PutS message for replacement, instead need to respond to all Ack

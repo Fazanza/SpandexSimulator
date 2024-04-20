@@ -368,18 +368,41 @@ class TestCacheSystem(unittest.TestCase):
 
         # setup cache
         cache = cache_ctrl.cache
-        c1 = CacheEntry(0x1, State.SM_D, True, False, [0x01, 0x02, 0x03, 0x04])
-        c2 = CacheEntry(0x45, State.M, True, False, [0x05, 0x06, 0x07, 0x08])
-        c3 = CacheEntry(0x85, State.I, True, False, [0x11, 0x12, 0x13, 0x14])
-        c4 = CacheEntry(0x123, State.S, True, False, [0x0D, 0x0E, 0x0F, 0x10])
+        c1 = CacheEntry(0x1, State.IM_D, True, False, [0x01, 0x02, 0x03, 0x04])
+        c2 = CacheEntry(0x45, State.IM_D, True, False, [0x05, 0x06, 0x07, 0x08])
+        c3 = CacheEntry(0x85, State.IM_D, True, False, [0x11, 0x12, 0x13, 0x14])
+        c4 = CacheEntry(0x123, State.SM_D, True, False, [0x0D, 0x0E, 0x0F, 0x10])
+        c5 = CacheEntry(0xc0, State.SM_D, True, False, [0x0D, 0x0E, 0x0F, 0x10])
         Cache.set_entry(cache, c1)
         Cache.set_entry(cache, c2)
         Cache.set_entry(cache, c3)
         Cache.set_entry(cache, c4)
+        Cache.set_entry(cache, c5)
         cache_ctrl.cache.print_contents()
 
         # cache_ctrl.setCPU() #parse mem traces
-        cache_ctrl.channels['instruction_in'].print_all_messages()
+        # cache_ctrl.channels['instruction_in'].print_all_messages()
+
+        # Possible message types for the test
+        allowed_message_types = [MessageType.PutAck, MessageType.DataDir, MessageType.DataOwner]
+
+        # Randomly select a message type from the allowed types
+        msg_type = random.choice(allowed_message_types)
+
+        for _ in range(20):
+            addr = random.randint(0x0, 0x100)  # Random address
+            # Possible message types for the test
+            allowed_message_types = [MessageType.PutAck, MessageType.DataDir, MessageType.DataOwner]
+            # Randomly select a message type from the allowed types
+            msg_type = random.choice(allowed_message_types)
+            if msg_type in (MessageType.PutAck, MessageType.DataDir):
+                src = Node.LLC  # Directory source for PutAck and DataDir
+            else:
+                src = random.choice([Node.CPU1, Node.CPU2, Node.CPU3])  # Random CPU source for DataOwner
+            msg = Msg(msg_type, addr, src, dst = Node.CPU0)
+            cache_ctrl.channels['response_in'].send_message(msg)
+
+        cache_ctrl.channels['response_in'].print_all_messages()
 
         print("============SIMULATION START==================")
         for _ in range(100):
