@@ -1,9 +1,9 @@
 from enum import Enum, auto
 import random
 from collections import deque
-from global_utility import *
-from llc import *
-from llc_cpu_translation import *
+from utility.global_utility import *
+from core.llc import *
+from core.llc_cpu_translation import *
 
 class Translation:
     translation_map = {

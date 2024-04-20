@@ -1,11 +1,11 @@
 from collections import deque
-from global_utility import *
-from llc import *
-from gpu import *
-from llc_cpu_translation import *
-from msg_classify import *
-from msi_coherence import *
-from System import *
+from ..utility.global_utility import *
+from ..core.llc import *
+from ..core.gpu import *
+from ..core.cpu import *
+from ..core.llc_cpu_translation import *
+from ..core.msg_classify import *
+from ..core.System import *
 
 llc_cache_size = 256
 cpu_cache_size = 256

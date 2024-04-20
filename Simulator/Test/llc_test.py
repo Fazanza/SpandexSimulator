@@ -1,5 +1,5 @@
-from llc import *
-from debug_utility import*
+from core.llc import *
+from utility.llc_debug_utility import*
 
 llc_controller = LLC_Controller(256, 2,16, 1024, 10, 1, 3, 3)
 llc_debugger = llc_debug(llc_controller)

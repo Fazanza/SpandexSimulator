@@ -2,8 +2,8 @@ import math
 from enum import Enum, auto
 import random
 from collections import deque
-from cpu_header import *
-from global_utility import *
+from header.cpu_header import *
+from utility.global_utility import *
 
 
 ## for GPU cache

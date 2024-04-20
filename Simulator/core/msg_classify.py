@@ -1,4 +1,4 @@
-from global_utility import *
+from utility.global_utility import *
 
 class msg_classify:
     msg_map = {

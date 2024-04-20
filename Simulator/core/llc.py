@@ -1,9 +1,9 @@
 from enum import Enum, auto
 import random
 from collections import deque
-from llc_utility import *
-from global_utility import *
-from llc import *
+from utility.llc_utility import *
+from utility.global_utility import *
+from core.llc import *
 
 
 ## for request there is always an time stamp

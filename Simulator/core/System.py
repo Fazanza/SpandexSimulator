@@ -1,5 +1,5 @@
-from global_utility import *
-from msg_classify import *
+from utility.global_utility import *
+from core.msg_classify import *
 
 class System:
     def __init__(self, Device_Map, Device_List, Core_List, CPU_List, GPU_List, TPU):

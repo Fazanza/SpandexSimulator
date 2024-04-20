@@ -151,10 +151,10 @@ class Queue:
     
     def print_all(self):
         print("#################### Queue ####################")
+        print(f"Queue Size: {len(self.items)}")
         for item in self.items:
-            item.print_msg()
-
-
+            if item != None:
+                item.print_msg()
 
 class Map:
     def __init__(self):

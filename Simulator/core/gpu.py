@@ -2,8 +2,8 @@ import math
 from enum import Enum, auto
 import random
 from collections import deque
-from gpu_utility import *
-from gpu import *
+from utility.gpu_utility import *
+from core.gpu import *
 
 
 
@@ -26,17 +26,18 @@ class GPU_Controller:
         
     def Fill_Inst(self, file_name):
         with open(file_name, 'r') as file:
+            pc = 0
             for line in file:
                 elements = line.split()
                 inst = []
                 if elements[0] == "ld":
                     inst_type = Inst_type.Load
                     addr = int(elements[1])
-                    inst = Inst(inst_type, addr, 0)
+                    inst = Inst(inst_type, addr, pc + 1)
                 elif elements[0] == "st":
                     inst_type = Inst_type.Store
                     addr = int(elements[1])
-                    inst = Inst(inst_type, addr, 0)
+                    inst = Inst(inst_type, addr, pc + 1)
                 elif elements[0] == "Barrier":
                     inst_type = Inst_type.Barrier
                     barrier_name = int(elements[1])
@@ -46,6 +47,7 @@ class GPU_Controller:
                 else:
                     print("There is undefine instruction type")
                 self.inst_buffer.enqueue(inst)
+                pc = pc + 1
     
     def get_new_rep(self):
         if self.rep_msg_box.is_empty():
@@ -199,6 +201,7 @@ class GPU_Controller:
         return self.generated_msg
     
     def take_generated_msg(self):
+        assert self.generated_msg != None, "Error! Take generated msg when there is no GPU generated msg"
         self.generated_msg = None
         
     # receiece barrier info from top, call one time if One Node send a barrier before GPU execution in the same cycle

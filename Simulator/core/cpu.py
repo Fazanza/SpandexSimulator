@@ -2,15 +2,15 @@ import math
 from enum import Enum, auto
 import random
 from collections import deque
-from gpu_utility import *
-from gpu import *
+from utility.cpu_utility import *
+from core.cpu import *
 
 
 
 class CPU_Controller:
 
     def __init__(self, cache_size, ways, line_size, memory_size, file_name, Node):
-        self.cache      = GPU_cache(cache_size, ways, line_size, memory_size)
+        self.cache      = CPU_cache(cache_size, ways, line_size, memory_size)
         self.rep_msg_box = Queue()
         self.req_msg_box = Queue()
         self.inst_buffer = Queue()
@@ -30,17 +30,18 @@ class CPU_Controller:
         
     def Fill_Inst(self, file_name):
         with open(file_name, 'r') as file:
+            pc = 0
             for line in file:
                 elements = line.split()
                 inst = []
                 if elements[0] == "ld":
                     inst_type = Inst_type.Load
                     addr = int(elements[1])
-                    inst = Inst(inst_type, addr, 0)
+                    inst = Inst(inst_type, addr, pc + 1)
                 elif elements[0] == "st":
                     inst_type = Inst_type.Store
                     addr = int(elements[1])
-                    inst = Inst(inst_type, addr, 0)
+                    inst = Inst(inst_type, addr, pc + 1)
                 elif elements[0] == "Barrier":
                     inst_type = Inst_type.Barrier
                     barrier_name = int(elements[1])
@@ -50,6 +51,7 @@ class CPU_Controller:
                 else:
                     print("There is undefine instruction type")
                 self.inst_buffer.enqueue(inst)
+                pc = pc + 1
     
     def get_new_rep(self):
         if self.rep_msg_box.is_empty():
@@ -94,10 +96,10 @@ class CPU_Controller:
         if self.cache.addNewLine(addr) == True: ## there is empty line
             return True
         else: # should evict the cache line
-            evict_addr, evict_line_state, evict_word_state = self.cache.getLRU(addr)
+            evict_addr, evict_line_state = self.cache.getLRU(addr)
             if self.is_inst_qualified(evict_addr):
                 evict_state = self.cache.getState_line(evict_addr)
-                if evict_state == State.O: # block the instruction if the evict addr is in O state
+                if evict_state == State.M: # block the instruction if the evict addr is in O state
                     gen_msg = Msg(msg_type.PutM, evict_addr, self.Node, Node.LLC) # only trigger when execute an instruction
                     self.cache.updateState_line(evict_addr, State.MI_A)
                     self.generated_msg_queue.enqueue(gen_msg)
@@ -348,17 +350,12 @@ class CPU_Controller:
         assert self.generated_msg_queue.is_empty() == False, "Error! Can not take msg out from CPU generated msg queue"
         self.generated_msg_queue.dequeue()
         
-    # receiece barrier info from top, call one time if One Node send a barrier before GPU execution in the same cycle
+    # receiece barrier info from top, call one time if One Node send a barrier before CPU execution in the same cycle
     def update_barrier(self, barrier_name):
         if barrier_name != None:
             barrier_num = self.barrier_map.search(barrier_name)
             print(barrier_num)
             self.barrier_map.change(barrier_name, barrier_num-1)
-        # get the barrier_num for current barrier which GPU stop at
-        # current_barrier_num = self.barrier_map.search(self.barrier_name)
-        # if current_barrier_num != None:
-        #     if current_barrier_num == 0:
-        #         self.wait = False
                 
     def get_barrier(self):
         temp = self.barrier_name_observed
@@ -370,7 +367,7 @@ class CPU_Controller:
 
     def CPU_run(self):
         print()
-        print(f"#################### GPU Run at Clk Cnt {self.clk_cnt} ####################")
+        print(f"#################### CPU Run at Clk Cnt {self.clk_cnt} ####################")
         generated_queue_empty = self.generated_msg_queue.is_empty()
         # First execute response
         rep_msg = self.get_new_rep()
@@ -392,8 +389,9 @@ class CPU_Controller:
         if req_msg != None:
             current_state = self.get_current_state(req_msg)
             result, gen_msg = self.do_transition(current_state, req_msg)
+            print(req_msg.addr)
             assert result != type.Error, "Error! CPU wrong when taking request"
-            if result == type.Sucess:
+            if result == type.Success:
                 assert gen_msg != None, "Error! CPU do not generate msg after execute a request"
                 if generated_queue_empty == True:
                     self.generated_msg_queue.enqueue(gen_msg)
@@ -412,12 +410,12 @@ class CPU_Controller:
                     self.wait = False
                 return 0
             elif self.current_inst.inst_type == Inst_type.Load or self.current_inst.inst_type == Inst_type.Store:
-                if self.generated_msg_queue.is_member(self.not_taken_req): # Previous CPU to LLC request is not taken by LLC, should keep wait
+                if self.generated_msg_queue.is_member(self.not_taken_req) and self.not_taken_req != None: # Previous CPU to LLC request is not taken by LLC, should keep wait
                     return 0
-                else: # GPU wait because Last instruction has been blocked because there is existing request on that addr, should retry
+                else: # CPU wait because Last instruction has been blocked because there is existing request on that addr, should retry
                     self.wait = False
         
-        # assert self.generated_msg == None, "Error! GPU generate new message when execute response"
+        # assert self.generated_msg == None, "Error! CPU generate new message when execute response"
 
         inst = self.get_new_inst()
         if inst == None:
@@ -426,7 +424,7 @@ class CPU_Controller:
             return 0
         self.current_inst = inst
         if inst.inst_type == Inst_type.Load:
-            inst_msg = Msg(msg_type.Load, inst.addr, Node.CPU, Node.CPU, 0, Node.NULL)
+            inst_msg = Msg(msg_type.Load, inst.addr, self.Node, self.Node, 0, Node.NULL)
             current_state = self.get_current_state(inst_msg)
             load_result, gen_msg = self.do_transition(current_state, inst_msg)
             assert load_result != type.Error, "Error! CPU wrong when execute Load instruction"
@@ -435,12 +433,13 @@ class CPU_Controller:
                 self.wait = True
                 
             elif load_result == type.Success:
-                self.generated_msg_queue.enqueue(gen_msg)
+                if gen_msg != None:
+                    self.generated_msg_queue.enqueue(gen_msg)
                 self.cache.renewAccess(inst_msg.addr)
                 assert self.wait == False, "Error! CPU is waiting after a Success Load"
 
         elif inst.inst_type == Inst_type.Store:
-            inst_msg = Msg(msg_type.Store, inst.addr, Node.CPU, Node.CPU, 0, Node.NULL)
+            inst_msg = Msg(msg_type.Store, inst.addr, self.Node, self.Node, 0, Node.NULL)
             current_state = self.get_current_state(inst_msg)
             store_result, gen_msg = self.do_transition(current_state, inst_msg)
             assert store_result != type.Error, "Error! CPU wrong when execute Load instruction"
@@ -449,7 +448,8 @@ class CPU_Controller:
                 self.wait = True
                 
             elif store_result == type.Success:
-                self.generated_msg_queue.enqueue(gen_msg)
+                if gen_msg != None:
+                    self.generated_msg_queue.enqueue(gen_msg)
                 self.cache.renewAccess(inst_msg.addr)
                 assert self.wait == False, "Error! CPU is waiting after a Success Store"
             
@@ -465,7 +465,7 @@ class CPU_Controller:
             return 0
 
 
-    ## this function should take the response from Top, have to follow GPU_RUN() and *** have already taken generated msg ***
+    ## this function should take the response from Top, have to follow CPU_RUN() and *** have already taken generated msg ***
     #  deal with whether the previous generated msg can be taken by LLC
     def CPU_POST_RUN(self):
         if self.generated_msg_queue.is_empty() == True and self.wait == False:
@@ -476,11 +476,3 @@ class CPU_Controller:
             self.not_taken_req = self.generated_msg_queue.peek()
             self.wait = True
         self.clk_cnt = self.clk_cnt + 1
-
-
-    #############
-    # 1. Every Node before GPU execution, Call update_barrier()
-    # 2. When GPU execution
-    #   2.1 first call receieve_rep_msg()
-    #   2.2 Then call GPU_RUN()
-    #   2.3 After check LLC req_msg_Box is full or not, call GPU_POST_RUN()
