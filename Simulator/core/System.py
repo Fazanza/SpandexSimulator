@@ -30,9 +30,15 @@ class System:
     ### when Every Node run, it just read it's own req and rep queue
     def LLC_RUN(self, LLC_Node):
         LLC = self.Device_Map.search(LLC_Node)
+        if LLC.rep_msg_box != None:
+            LLC.rep_msg_box.print_all()
         LLC.LLC_run()
-        a = 1
-        print(a)
+        # evict_addr, evict_line_state, evict_word_state, evict_sharer, evict_owner = LLC.cache.getLRU(137)
+        # print(evict_addr)
+        # print(LLC.cache.getState_line(evict_addr))
+        print(LLC.cache.getState_line(137))
+        print(LLC.cache.getOwner(137))
+        print(LLC.cache.get_sharer(137))
         while LLC.get_generated_msg() != None:
             generated_msg = LLC.get_generated_msg()
             msg_class = self.MsgClassify.get_value(generated_msg.msg_type)
@@ -71,6 +77,9 @@ class System:
     def CPU_RUN(self, CPU_Node):
         CPU = self.Device_Map.search(CPU_Node)
         CPU.CPU_run()
+        CPU.current_inst.print_Inst()
+        print(CPU.cache.getState_line(137))
+        print(f"CPU retry = {CPU.retry}")
         # do barrier
         CPU_barrier = CPU.get_barrier()
         if CPU_barrier != None:

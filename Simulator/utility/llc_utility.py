@@ -71,6 +71,7 @@ class dir_cache:
     total_sets = 0 # number of sets in cache
     line_state = []
     words_state = []
+    inv_cnt = 0
     owner = []
     sharer = []
     line_tag = []
@@ -98,7 +99,8 @@ class dir_cache:
         self.owner = [[Node.MEM for j in range(self.ways)] for k in range(self.total_sets)]
         self.sharer = [[[] for j in range(self.ways)] for k in range(self.total_sets)]
         self.line_tag = [[-1 for j in range(self.ways)] for k in range(self.total_sets)]
-        self.msg_dst= [[Node.NULL for j in range(self.ways)] for k in range(self.total_sets)]
+        self.msg_dst = [[Node.NULL for j in range(self.ways)] for k in range(self.total_sets)]
+        self.inv_cnt = [[0 for j in range(self.ways)] for k in range(self.total_sets)]
     ## Separate address into tag, index and offset
     def parseAddr(self, addr):
         tag = addr >> (self.index_bits + self.offset_bits)
@@ -197,6 +199,33 @@ class dir_cache:
             return Node.MEM
         else:
             return self.owner[index][match_way]
+    
+    def getInvCnt(self, addr):
+        tag, index, offset = self.parseAddr(addr)
+        match_way = self.searchSet(index, tag)
+        if (match_way == -1):
+            print("Error! line miss in cache during get inv_cnt")
+            quit()
+        else:
+            return self.inv_cnt[index][match_way]
+    
+    def UpdateInvCnt(self, addr, cnt):
+        tag, index, offset = self.parseAddr(addr)
+        match_way = self.searchSet(index, tag)
+        if (match_way == -1):
+            print("Error! line miss in cache during update inv_cnt")
+            quit()
+        else:
+            self.inv_cnt[index][match_way] = cnt
+    
+    def MinusInvCnt(self, addr):
+        tag, index, offset = self.parseAddr(addr)
+        match_way = self.searchSet(index, tag)
+        if (match_way == -1):
+            print("Error! line miss in cache during decrease inv_cnt")
+            quit()
+        else:
+            self.inv_cnt[index][match_way] = self.inv_cnt[index][match_way] - 1
         
     def updateMsgDst(self, addr, new_dst):
         tag, index, offset = self.parseAddr(addr)
@@ -277,6 +306,7 @@ class dir_cache:
         temp_sharer = self.sharer[index][match_way][:]
         temp_owner = self.owner[index][match_way]
         temp_msg_dst = self.msg_dst[index][match_way]
+        temp_inv_cnt = self.inv_cnt[index][match_way]
         for i in range(match_way):
             self.words_state[index][i+1] = self.words_state[index][i][:]
             self.line_state[index][i+1] = self.line_state[index][i]
@@ -284,12 +314,14 @@ class dir_cache:
             self.sharer[index][i+1] = self.sharer[index][i][:]
             self.owner[index][i+1] = self.owner[index][i]
             self.msg_dst[index][i+1] = self.msg_dst[index][i]
+            self.inv_cnt[index][i+1] = self.inv_cnt[index][i]
         self.words_state[index][0] = temp_word_state[:]
         self.line_state[index][0] = temp_line_state
         self.line_tag[index][0] = tag
         self.sharer[index][0] = temp_sharer
         self.owner[index][0] = temp_owner
         self.msg_dst[index][0] = temp_msg_dst
+        self.inv_cnt[index][0] = temp_inv_cnt
 
     ## Return LRU tag and state
     ## Only use when eviction is required

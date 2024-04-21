@@ -45,9 +45,9 @@ def main():
     Device_Map.insert(Node.CPU3, CPU3)
 
     
-    Device_List = [Node.LLC, Node.GPU, Node.CPU0, Node.CPU1]
-    Core_List   = [Node.GPU, Node.CPU0, Node.CPU1]
-    CPU_List    = [Node.CPU0, Node.CPU1]
+    Device_List = [Node.LLC, Node.GPU, Node.CPU0, Node.CPU1, Node.CPU2, Node.CPU3]
+    Core_List   = [Node.GPU, Node.CPU0, Node.CPU1, Node.CPU2, Node.CPU3]
+    CPU_List    = [Node.CPU0, Node.CPU1, Node.CPU2, Node.CPU3]
     GPU_List    = [Node.GPU]
 
     

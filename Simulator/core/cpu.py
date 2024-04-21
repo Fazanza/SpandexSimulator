@@ -20,6 +20,7 @@ class CPU_Controller:
         self.inst_empty = False
         self.clk_cnt = 0
         self.wait = False
+        self.retry = False
         self.current_inst = None
         self.current_rep_msg = None
         self.current_req_msg = None
@@ -209,6 +210,7 @@ class CPU_Controller:
                     gen_msg = Msg(msg_type.InvAck, input_msg.target_addr, self.Node, Node.LLC)
                 else:
                     gen_msg = Msg(msg_type.InvAck, msg_addr, self.Node, Node.LLC)
+                self.cache.updateState_line(msg_addr, State.I)
             ###
             else:
                 return type.Error, None
@@ -393,7 +395,7 @@ class CPU_Controller:
 
             current_state = self.get_current_state(rep_msg)
             result, gen_msg = self.do_transition(current_state, rep_msg)
-            assert result != type.Error, "Error! CPU wrong when take rep msg"
+            assert result != type.Error, f"Error! CPU wrong when take rep msg, state: {current_state}, msg : {rep_msg.msg_type}, {rep_msg.addr}, {rep_msg.src}, {rep_msg.dst}"
             if gen_msg != None:
                 if generated_queue_empty == True:
                     self.generated_msg_queue.enqueue(gen_msg)
@@ -429,13 +431,17 @@ class CPU_Controller:
                     self.wait = False
                 return 0
             elif self.current_inst.inst_type == Inst_type.Load or self.current_inst.inst_type == Inst_type.Store:
-                if rep_msg != None: # CPU wait if there is no rep on current Load or Store instruction
-                    assert self.is_inst_qualified(rep_msg.addr), "Error! CPU receieve a response and not transfer to State State"
-                    if rep_msg.msg_type != msg_type.PutAck: # because PutAck means current inst is blocked because invalid eviction, should retry
-                        self.inst_buffer.dequeue()
+                if self.retry == True:
+                    self.retry = False
                     self.wait = False
-                else: # should continue stall
-                    return 0
+                else:
+                    if rep_msg != None: # CPU wait if there is no rep on current Load or Store instruction
+                        assert self.is_inst_qualified(rep_msg.addr), "Error! CPU receieve a response and not transfer to State State"
+                        if rep_msg.msg_type != msg_type.PutAck: # because PutAck means current inst is blocked because invalid eviction, should retry
+                            self.inst_buffer.dequeue()
+                        self.wait = False
+                    else: # should continue stall
+                        return 0
         
         # assert self.generated_msg == None, "Error! CPU generate new message when execute response"
 
@@ -451,7 +457,8 @@ class CPU_Controller:
             load_result, gen_msg = self.do_transition(current_state, inst_msg)
             assert load_result != type.Error, "Error! CPU wrong when execute Load instruction"
              # this load instruction can not proceed in this cycle
-            if load_result == type.Block:
+            if load_result == type.Block: # should retry next time
+                self.retry = True
                 self.wait = True
                 
             elif load_result == type.Success:
@@ -468,7 +475,8 @@ class CPU_Controller:
             store_result, gen_msg = self.do_transition(current_state, inst_msg)
             assert store_result != type.Error, "Error! CPU wrong when execute Load instruction"
             # this Store instruction can not proceed in this cycle
-            if store_result == type.Block:
+            if store_result == type.Block:  # should retry next time
+                self.retry = True
                 self.wait = True
                 
             elif store_result == type.Success:
