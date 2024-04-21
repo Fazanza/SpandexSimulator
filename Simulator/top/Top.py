@@ -7,23 +7,29 @@ from core.llc_cpu_translation import *
 from core.msg_classify import *
 from core.System import *
 
-llc_cache_size = 256
-cpu_cache_size = 256
-gpu_cache_size = 256
+llc_cache_size = 1024
+cpu_cache_size = 1024
+gpu_cache_size = 1024
 ways = 2
 line_size = 16
-memory_size = 1024
+memory_size = 8192
 
 llc_req_box_size = 10 # max pending request LLC can take
 llc_min_delay = 1
 llc_max_delay = 3
 llc_mem_delay = 3
+#
+# gpu_trace = "../gpu_t2.txt"
+# cpu0_trace = "../cpu0_t2.txt"
+# cpu1_trace = "../cpu1_t2.txt"
+# cpu2_trace = "../cpu2_t2.txt"
+# cpu3_trace = "../cpu3_t2.txt"
 
-gpu_trace = "../gpu_t1.txt"
-cpu0_trace = "../cpu0_t1.txt"
-cpu1_trace = "../cpu1_t1.txt"
-cpu2_trace = "../cpu2_t1.txt"
-cpu3_trace = "../cpu3_t1.txt"
+gpu_trace = "../gpu_0.txt"
+cpu0_trace = "../cpu_0.txt"
+cpu1_trace = "../cpu1_t2.txt"
+cpu2_trace = "../cpu2_t2.txt"
+cpu3_trace = "../cpu3_t2.txt"
 
 def main():
     
@@ -45,9 +51,9 @@ def main():
     Device_Map.insert(Node.CPU3, CPU3)
 
     
-    Device_List = [Node.LLC, Node.GPU, Node.CPU0, Node.CPU1, Node.CPU2, Node.CPU3]
-    Core_List   = [Node.GPU, Node.CPU0, Node.CPU1, Node.CPU2, Node.CPU3]
-    CPU_List    = [Node.CPU0, Node.CPU1, Node.CPU2, Node.CPU3]
+    Device_List = [Node.LLC, Node.GPU, Node.CPU0]
+    Core_List   = [Node.GPU, Node.CPU0]
+    CPU_List    = [Node.CPU0]
     GPU_List    = [Node.GPU]
 
     

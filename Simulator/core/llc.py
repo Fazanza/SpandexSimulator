@@ -474,8 +474,6 @@ class LLC_Controller:
                         if dst != msg_src:
                             msg = Msg(msg_type.Inv, msg_addr, Node.LLC, dst)
                             self.generated_msg_queue.enqueue(msg)
-                print(f"inv_cnt = {self.cache.getInvCnt(msg_addr)}")
-                msg.print_msg()
             ###
             elif input_msg.msg_type == msg_type.ReqWB:
                 if msg_src == owner:

@@ -84,7 +84,7 @@ class GPU_Controller:
         else: # should evict the cache line
             evict_addr, evict_line_state, evict_word_state = self.cache.getLRU(addr)
             if self.is_inst_qualified(evict_addr):
-                self.cache.updateState_line_word(addr, State.I)
+                self.cache.updateState_line_word(evict_addr, State.I)
                 self.cache.addNewLine(addr)
                 return True
             else: # the evicted cache block is in transient state, can not evict
@@ -210,8 +210,8 @@ class GPU_Controller:
     def update_barrier(self, barrier_name):
         if barrier_name != None:
             barrier_num = self.barrier_map.search(barrier_name)
-            print(barrier_num)
-            self.barrier_map.change(barrier_name, barrier_num-1)
+            if barrier_num != None:
+                self.barrier_map.change(barrier_name, barrier_num-1)
         # get the barrier_num for current barrier which GPU stop at
         # current_barrier_num = self.barrier_map.search(self.barrier_name)
         # if current_barrier_num != None:

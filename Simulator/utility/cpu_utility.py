@@ -69,11 +69,8 @@ class CPU_cache:
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
         ## only use updateState when the line exist in cache
-        if (match_way == -1):
-            print("Error! line miss in cache during updating state")
-            quit()
-        else:
-            self.line_state[index][match_way] = new_state
+        assert match_way != -1, "Error! CPU line miss in cache during updating state"
+        self.line_state[index][match_way] = new_state
 
 
     ## Adding new address line into cache but need to modified state later
@@ -101,9 +98,7 @@ class CPU_cache:
     def renewAccess(self, addr):
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
-        if(match_way == -1):
-            print("Error! line miss in cache during renew access")
-            quit()
+        assert match_way != -1, "Error! CPU line miss in cache during renew access"
         temp_line_state = self.line_state[index][match_way]
         for i in range(match_way):
             self.line_state[index][i+1] = self.line_state[index][i]
