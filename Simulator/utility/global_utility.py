@@ -150,6 +150,10 @@ class Queue:
         return element in self.items
     
     def print_all(self):
+        if self.items == None:
+            return 0
+        if len(self.items) == 0:
+            return 0
         print("#################### Queue ####################")
         print(f"Queue Size: {len(self.items)}")
         for item in self.items:

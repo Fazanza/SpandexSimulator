@@ -1,0 +1,4 @@
+ld 8
+st 7
+Barrier 0 5
+st 128

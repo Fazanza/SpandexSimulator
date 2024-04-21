@@ -1,0 +1,6 @@
+ld 5
+st 29
+ld 67
+Barrier 0 5
+ld 128
+st 137

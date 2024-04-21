@@ -5,6 +5,5 @@ st 128
 ld 128
 Barrier 0 2
 ld 24
-Barrier 1 3
 ld 57
 ld 50
