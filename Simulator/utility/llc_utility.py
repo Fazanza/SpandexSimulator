@@ -153,43 +153,31 @@ class dir_cache:
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
         ## only use updateState when the line exist in cache
-        if (match_way == -1):
-            print("Error! line miss in cache during updating state")
-            quit()
-        else:
-            self.words_state[index][match_way][offset] = new_state
+        assert match_way != -1, "Error! LLC line miss in cache during updating word state"
+        self.words_state[index][match_way][offset] = new_state
 
     def updateState_line(self, addr, new_state):
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
         ## only use updateState when the line exist in cache
-        if (match_way == -1):
-            print("Error! line miss in cache during updating state")
-            quit()
-        else:
-            self.line_state[index][match_way] = new_state
+        assert match_way != -1, "Error! LLC line miss in cache during updating line state"
+        self.line_state[index][match_way] = new_state
 
     def updateState_line_word(self, addr, new_state):
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
         ## only use updateState when the line exist in cache
-        if (match_way == -1):
-            print("Error! line miss in cache during updating state")
-            quit()
-        else:
-            self.line_state[index][match_way] = new_state
-            for i in range(len(self.words_state[index][match_way])):
-                self.words_state[index][match_way][i] = new_state
+        assert match_way != -1, "Error! LLC line miss in cache during updating line word state"
+        self.line_state[index][match_way] = new_state
+        for i in range(len(self.words_state[index][match_way])):
+            self.words_state[index][match_way][i] = new_state
 
     def updateOwner(self, addr, new_owner):
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
         ## only use updateState when the line exist in cache
-        if (match_way == -1):
-            print("Error! line miss in cache during updating owner")
-            quit()
-        else:
-            self.owner[index][match_way] = new_owner
+        assert match_way != -1, "Error! LLC line miss in cache during updating owner"
+        self.owner[index][match_way] = new_owner
 
     def getOwner(self, addr):
         tag, index, offset = self.parseAddr(addr)
@@ -203,48 +191,33 @@ class dir_cache:
     def getInvCnt(self, addr):
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
-        if (match_way == -1):
-            print("Error! line miss in cache during get inv_cnt")
-            quit()
-        else:
-            return self.inv_cnt[index][match_way]
+        assert match_way != -1, "Error! LLC line miss in cache during get inv_cnt"
+        return self.inv_cnt[index][match_way]
     
     def UpdateInvCnt(self, addr, cnt):
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
-        if (match_way == -1):
-            print("Error! line miss in cache during update inv_cnt")
-            quit()
-        else:
-            self.inv_cnt[index][match_way] = cnt
+        assert match_way != -1, "Error! LLC line miss in cache during update inv_cnt"
+        self.inv_cnt[index][match_way] = cnt
     
     def MinusInvCnt(self, addr):
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
-        if (match_way == -1):
-            print("Error! line miss in cache during decrease inv_cnt")
-            quit()
-        else:
-            self.inv_cnt[index][match_way] = self.inv_cnt[index][match_way] - 1
+        assert match_way != -1, "Error! LLC line miss in cache during decrease inv_cnt"
+        self.inv_cnt[index][match_way] = self.inv_cnt[index][match_way] - 1
         
     def updateMsgDst(self, addr, new_dst):
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
         ## only use updateState when the line exist in cache
-        if (match_way == -1):
-            print("Error! line miss in cache during updating msg dst")
-            quit()
-        else:
-            self.msg_dst[index][match_way] = new_dst
+        assert match_way != -1, "Error! LLC line miss in cache during updating msg dst"
+        self.msg_dst[index][match_way] = new_dst
 
     def getMsgDst(self, addr):
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
-        if (match_way == -1):
-            print("Error! line miss in cache during getting msg dst")
-            quit()
-        else:
-            return self.msg_dst[index][match_way]
+        assert match_way != -1, "Error! LLC line miss in cache during getting msg dst"
+        return self.msg_dst[index][match_way]
 
     ## Adding new address line into cache but need to modified state later
     def addNewLine(self, addr):
@@ -280,27 +253,20 @@ class dir_cache:
     def add_sharer(self, addr, src):
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
-        if match_way == -1:
-            print("Error! line miss in cache during clear sharer")
-            quit()
-        else:
-            self.sharer[index][match_way].append(src)
+        assert match_way != -1, "Error! LLC line miss in cache during clear sharer"
+        self.sharer[index][match_way].append(src)
 
     def get_sharer(self, addr):
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
-        if match_way == -1:
-            print("Error! line miss in cache during clear sharer")
-        else:
-            return self.sharer[index][match_way]
+        assert match_way != -1, "Error! LLC line miss in cache during clear sharer"
+        return self.sharer[index][match_way]
 
     ## Only use when making sure the address is in cache
     def renewAccess(self, addr):
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
-        if(match_way == -1):
-            print("Error! line miss in cache during renew access")
-            quit()
+        assert match_way != -1, "Error! line miss in cache during renew access"
         temp_word_state = self.words_state[index][match_way][:]
         temp_line_state = self.line_state[index][match_way]
         temp_sharer = self.sharer[index][match_way][:]

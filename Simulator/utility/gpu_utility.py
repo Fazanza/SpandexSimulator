@@ -91,33 +91,24 @@ class GPU_cache:
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
         ## only use updateState when the line exist in cache
-        if (match_way == -1):
-            print("Error! line miss in cache during updating state")
-            quit()
-        else:
-            self.words_state[index][match_way][offset] = new_state
+        assert match_way != -1, "Error! GPU line miss in cache during updating word state"
+        self.words_state[index][match_way][offset] = new_state
 
     def updateState_line(self, addr, new_state):
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
         ## only use updateState when the line exist in cache
-        if (match_way == -1):
-            print("Error! line miss in cache during updating state")
-            quit()
-        else:
-            self.line_state[index][match_way] = new_state
+        assert match_way != -1, "Error! GPU line miss in cache during updating line state"
+        self.line_state[index][match_way] = new_state
 
     def updateState_line_word(self, addr, new_state):
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
         ## only use updateState when the line exist in cache
-        if (match_way == -1):
-            print("Error! line miss in cache during updating state")
-            quit()
-        else:
-            self.line_state[index][match_way] = new_state
-            for i in range(len(self.words_state[index][match_way])):
-                self.words_state[index][match_way][i] = new_state
+        assert match_way != -1, "Error! GPU line miss in cache during updating line word state"
+        self.line_state[index][match_way] = new_state
+        for i in range(len(self.words_state[index][match_way])):
+            self.words_state[index][match_way][i] = new_state
 
     ## Adding new address line into cache but need to modified state later
     def addNewLine(self, addr):
@@ -146,9 +137,7 @@ class GPU_cache:
     def renewAccess(self, addr):
         tag, index, offset = self.parseAddr(addr)
         match_way = self.searchSet(index, tag)
-        if(match_way == -1):
-            print("Error! line miss in cache during renew access")
-            quit()
+        assert match_way != -1, "Error! GPU line miss in cache during renew access"
         temp_word_state = self.words_state[index][match_way][:]
         temp_line_state = self.line_state[index][match_way]
         for i in range(match_way):

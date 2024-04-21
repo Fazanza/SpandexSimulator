@@ -36,9 +36,6 @@ class System:
         # evict_addr, evict_line_state, evict_word_state, evict_sharer, evict_owner = LLC.cache.getLRU(137)
         # print(evict_addr)
         # print(LLC.cache.getState_line(evict_addr))
-        print(LLC.cache.getState_line(137))
-        print(LLC.cache.getOwner(137))
-        print(LLC.cache.get_sharer(137))
         while LLC.get_generated_msg() != None:
             generated_msg = LLC.get_generated_msg()
             msg_class = self.MsgClassify.get_value(generated_msg.msg_type)
@@ -128,7 +125,7 @@ class System:
 
             #self.Core_List = self.round_robin(self.Core_List)
             self.system_clk = self.system_clk + 1
-            if self.system_clk > 50:
+            if self.system_clk > 900:
                 print("Overtime !")
                 quit()
 

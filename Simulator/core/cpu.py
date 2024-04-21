@@ -105,7 +105,7 @@ class CPU_Controller:
                     self.cache.updateState_line(evict_addr, State.MI_A)
                     self.generated_msg_queue.enqueue(gen_msg)
                     return False
-                self.cache.updateState_line(addr, State.I)
+                self.cache.updateState_line(evict_addr, State.I)
                 self.cache.addNewLine(addr)
                 return True
             else: # the evicted cache block is in transient state, can not evict
@@ -370,8 +370,8 @@ class CPU_Controller:
     def update_barrier(self, barrier_name):
         if barrier_name != None:
             barrier_num = self.barrier_map.search(barrier_name)
-            print(barrier_num)
-            self.barrier_map.change(barrier_name, barrier_num-1)
+            if barrier_num != None:
+                self.barrier_map.change(barrier_name, barrier_num-1)
                 
     def get_barrier(self):
         temp = self.barrier_name_observed
