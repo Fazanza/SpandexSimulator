@@ -18,7 +18,7 @@ mem_type = ["ld", "st"]
 
 def cpu_write_block(sec_start, sec_end, block_size, file, core_id):
     private_start = 128 + core_id * 32
-    private_end = 128 + core_id * 32
+    private_end = 159 + core_id * 32
     for i in range(block_size):
         choice = random.randint(1, 3)
         if choice == 1:
