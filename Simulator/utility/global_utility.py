@@ -91,7 +91,7 @@ class Inst():
 
 
 class Msg:
-    def __init__(self, msg_type, addr, src, dst, ack_cnt = 0, fwd_dst = Node.NULL, target_addr = None):
+    def __init__(self, msg_type, addr=None, src=None, dst=None, ack_cnt = 0, fwd_dst = Node.NULL, target_addr = None):
         self.msg_type = msg_type
         self.addr = addr
         self.src = src

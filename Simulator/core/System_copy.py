@@ -18,7 +18,7 @@ class System:
     def get_clk(self):
         return self.system_clk
     
-    def round_robin(self,queue):
+    def round_robin(self, queue):
         temp = queue[0]
         for i in range(1, len(queue)):
             queue[i-1] = queue[i]
@@ -39,14 +39,14 @@ class System:
             #
             if msg_class == msg_class.Request: # send request to other Node
                 assert(generated_msg.dst != Node.GPU), "Error! LLC is sending request to GPU"
-                self.Device_Map.search(generated_msg.dst).receieve_req_msg(self.TPU.translate_msg(generated_msg))
+                self.Device_Map.search(generated_msg.dst).receive_req_msg(self.TPU.translate_msg(generated_msg))
                 LLC.take_generated_msg() # pop from LLC generated_msg_queue
             #
             elif msg_class == msg_class.Response: # send response to other Node
                 if self.is_member(generated_msg.dst, self.GPU_List):
-                    self.Device_Map.search(generated_msg.dst).receieve_rep_msg(generated_msg)
+                    self.Device_Map.search(generated_msg.dst).receive_req_msg(generated_msg)
                 elif self.is_member(generated_msg.dst, self.CPU_List):
-                    self.Device_Map.search(generated_msg.dst).receieve_rep_msg(self.TPU.translate_msg(generated_msg))
+                    self.Device_Map.search(generated_msg.dst).receive_req_msg(self.TPU.translate_msg(generated_msg))
                 LLC.take_generated_msg() # pop from LLC generated_msg_queue
     
     def GPU_RUN(self, GPU_Node):
@@ -87,18 +87,18 @@ class System:
             #debug
             generated_msg.print_msg()
             msg_class = self.MsgClassify.get_value(generated_msg.msg_type)
+            print(msg_class)
             if msg_class == msg_class.Request: # send request to other Node
                 assert(generated_msg.dst == Node.LLC), "Error! CPU is sending request to Node other than LLC"
                 #self.TPU.translate_msg(generated_msg).print_msg()
                 if self.Device_Map.search(Node.LLC).receieve_req_msg(self.TPU.translate_msg(generated_msg)) == True:
-                    print("message taken ")
                     CPU.take_generated_msg() # pop from LLC generated_msg_queue
             #
             elif msg_class is msg_class.Response: # send response to other Node
                 if self.is_member(generated_msg.dst, self.CPU_List):
-                    self.Device_Map.search(generated_msg.dst).receieve_rep_msg(generated_msg)
+                    self.Device_Map.search(generated_msg.dst).receive_rep_msg(generated_msg)
                 else:
-                    self.Device_Map.search(generated_msg.dst).receieve_rep_msg(self.TPU.translate_msg(generated_msg))
+                    self.Device_Map.search(generated_msg.dst).receive_rep_msg(self.TPU.translate_msg(generated_msg))
                 CPU.take_generated_msg() # pop from LLC generated_msg_queue
         #CPU.CPU_POST_RUN()
 
@@ -116,10 +116,14 @@ class System:
             for core in self.Core_List:
                 if self.is_member(core, self.CPU_List):
                     print(core)
+                    print("Run Start")
                     self.CPU_RUN(core)
-                    cpu_debugger = cpu_debug(self.Device_Map.search(core))
-                    cpu_debugger.print_Inst_Buffer()
-                    cpu_debugger.print_cpu_wait()
+                    print("done")
+                    self.Device_Map.search(core).channels['instruction_in'].print_all_messages()
+
+                    # cpu_debugger = cpu_debug(self.Device_Map.search(core))
+                    # cpu_debugger.print_Inst_Buffer()
+                    # cpu_debugger.print_cpu_wait()
                 elif self.is_member(core, self.GPU_List):
                     print(core)
                     self.GPU_RUN(core)

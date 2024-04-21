@@ -46,7 +46,8 @@ class Translation:
         real_msg_type = self.State_preProcess(msg.msg_type, msg.addr)
         if real_msg_type in self.translation_map:
             msg.msg_type = self.translation_map[real_msg_type]
-            return msg
         else:
-            print(f"msg_type {real_msg_type} not found in translation map.")
-            quit()
+            print(f"real_msg_type {real_msg_type} not found in translation map.")
+            #quit()
+        msg.msg_type = self.translation_map[msg.msg_type]
+        return msg

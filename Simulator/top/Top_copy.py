@@ -5,7 +5,8 @@ from core.gpu import *
 from core.cpu import *
 from core.llc_cpu_translation import *
 from core.msg_classify import *
-from core.System import *
+from core.System_copy import *
+from core.msi_coherence import *
 
 llc_cache_size = 256
 cpu_cache_size = 256
@@ -30,11 +31,19 @@ def main():
     # instantiate the object
     LLC     = LLC_Controller(llc_cache_size, ways, line_size, memory_size, llc_req_box_size, llc_min_delay, llc_max_delay, llc_mem_delay)
     GPU     = GPU_Controller(gpu_cache_size, ways, line_size, memory_size, gpu_trace)
-    CPU0    = CPU_Controller(cpu_cache_size, ways, line_size, memory_size, cpu0_trace, Node.CPU0) # to fix: add line size and way
-    CPU1    = CPU_Controller(cpu_cache_size, ways, line_size, memory_size, cpu1_trace, Node.CPU1) # to fix: add line size and way
-    CPU2    = CPU_Controller(cpu_cache_size, ways, line_size, memory_size, cpu2_trace, Node.CPU2) # to fix: add line size and way
-    CPU3    = CPU_Controller(cpu_cache_size, ways, line_size, memory_size, cpu3_trace, Node.CPU3)
+    CPU0 = CacheController(20, deviceID = Node.CPU0)
+    CPU1 = CacheController(20, deviceID = Node.CPU1)
+    CPU2 = CacheController(20, deviceID = Node.CPU2)
+    CPU3 = CacheController(20, deviceID = Node.CPU3)    
     TPU     = Translation(LLC)
+
+    CPU0.setCPU()
+    CPU1.setCPU()
+    CPU2.setCPU()
+    CPU3.setCPU()
+
+
+
     # add devices to Map
     Device_Map = Map()
     Device_Map.insert(Node.LLC, LLC)

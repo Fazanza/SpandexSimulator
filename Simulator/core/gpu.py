@@ -207,6 +207,7 @@ class GPU_Controller:
         
     # receiece barrier info from top, call one time if One Node send a barrier before GPU execution in the same cycle
     def update_barrier(self, barrier_name):
+        print(f"barrier name:{barrier_name}")
         if barrier_name != None:
             barrier_num = self.barrier_map.search(barrier_name)
             print(barrier_num)
@@ -220,7 +221,7 @@ class GPU_Controller:
     def get_barrier(self):
         temp = self.barrier_name_observed
         self.barrier_name_observed = None
-        return temp;
+        return temp
     
     def is_finish(self):
         return self.finish

@@ -362,7 +362,7 @@ class CPU_Controller:
     def get_barrier(self):
         temp = self.barrier_name_observed
         self.barrier_name_observed = None
-        return temp;
+        return temp
     
     def is_finish(self):
         return self.finish
