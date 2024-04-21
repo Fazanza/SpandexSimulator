@@ -4,10 +4,10 @@ from core.msg_classify import *
 class System:
     def __init__(self, Device_Map, Device_List, Core_List, CPU_List, GPU_List, TPU):
         self.Device_Map = Device_Map
-        self.Device_List = Device_List,
-        self.Core_List = Core_List,
-        self.CPU_List = CPU_List,
-        self.GPU_List = GPU_List,
+        self.Device_List = Device_List
+        self.Core_List = Core_List
+        self.CPU_List = CPU_List
+        self.GPU_List = GPU_List
         self.TPU = TPU # used to translate request between CPU and LLC
         self.MsgClassify = msg_classify()
         self.system_clk = 0
@@ -23,7 +23,7 @@ class System:
         queue[len(queue)-1] = temp
         return queue
 
-    def is_member(element, list):
+    def is_member(self, element, list):
         return element in list
     
     ### Every Node do not require any msg, it just send msg to the other Node
@@ -59,7 +59,7 @@ class System:
         if GPU.get_generated_msg() != None:
             generated_msg = GPU.get_generated_msg()
             msg_class = self.MsgClassify.get_value(generated_msg.msg_type)
-            assert msg_class == msg_class.request, "Error! GPU is generated Response type of msg"
+            assert msg_class == msg_class.Request, "Error! GPU is generated Response type of msg"
             assert generated_msg.dst == Node.LLC, "Error! GPU is sending Request to Node other than LLC"
             req_msg_taken = self.Device_Map.search(Node.LLC).receieve_req_msg # check if LLC req_msg_box has enough space to enqueue
             if req_msg_taken == True:
@@ -105,12 +105,12 @@ class System:
             if self.is_finish == True:
                 print("All Program Finish ! ! !")
                 return 0
-            
-            for i in len(self.Core_List):
-                if self.is_member(self.Core_List[i], self.CPU_List):
-                    self.CPU_RUN(self.Core_List[i])
-                elif self.is_member(self.Core_List[i], self.GPU_List):
-                    self.GPU_RUN(self.Core_List[i])
+
+            for core in self.Core_List:
+                if self.is_member(core, self.CPU_List):
+                    self.CPU_RUN(core)
+                elif self.is_member(core, self.GPU_List):
+                    self.GPU_RUN(core)
             self.LLC_RUN(Node.LLC)
 
             self.Core_List = self.round_robin(self.Core_List)

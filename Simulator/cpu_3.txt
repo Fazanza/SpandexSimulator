@@ -1,0 +1,10 @@
+st 89
+ld 78
+ld 85
+st 84
+ld 16
+ld 14
+st 57
+st 43
+ld 42
+ld 72

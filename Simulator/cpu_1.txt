@@ -1,0 +1,9 @@
+st 21
+st 59
+st 25
+st 86
+st 68
+st 70
+ld 1
+st 99
+ld 16

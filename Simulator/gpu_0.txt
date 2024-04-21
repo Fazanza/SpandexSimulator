@@ -1,11 +1,17 @@
-ld 128
-ld 256
-ld 37
-ld 128
-st 128
-ld 128
-Barrier 0 2
-ld 24
-Barrier 1 3
-ld 57
-ld 50
+st 9
+st 12
+st 3
+st 16
+st 6
+st 13
+ld 4
+st 15
+st 8
+ld 10
+st 11
+ld 4
+ld 13
+ld 13
+st 13
+st 0
+st 7
