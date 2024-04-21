@@ -2,7 +2,7 @@ import random
 
 # Parameters
 share_start = 0
-share_end = 128
+share_end = 63
 
 secA_start = 4096 + 0
 secA_end = 4096 + 127
@@ -34,7 +34,8 @@ def gpu_write_block(sec_start, sec_end, block_size, file):
         file.write(random.choice(['st ', 'ld ']) + str(random.randint(sec_start, sec_end)) + "\n")
 
 
-# Case 3, 4 cpu 1 gpu, the cpu dispatch task to gpu
+# Case 4, 4 cpu 1 gpu, the cpu dispatch task to gpu
+# Higher contention than case 3
 with open('cpu0.txt', 'w') as file:
     cpu_write_block(secA_start, secA_end, 200, file, 0)
     file.write("Barrier 0 2\n")
