@@ -2,7 +2,7 @@ import random
 
 # Parameters
 share_start = 0
-share_end = 32
+share_end = 64
 
 secA_start = 512 + 0
 secA_end = 512 + 31
@@ -34,23 +34,22 @@ def gpu_write_block(sec_start, sec_end, block_size, file):
         file.write(random.choice(['st ', 'ld ']) + str(random.randint(sec_start, sec_end)) + "\n")
 
 
-# Case 1, 1 cpu 1 gpu, the cpu dispatch task to gpu
+# Case 3, 4 cpu 1 gpu, the cpu dispatch task to gpu
 with open('cpu0.txt', 'w') as file:
-    cpu_write_block(secA_start, secA_end, 10, file, 0)
+    cpu_write_block(secA_start, secA_end, 20, file, 0)
     file.write("Barrier 0 2\n")
-    cpu_write_block(secB_start, secB_end, 10, file, 0)
-    file.write("Barrier 1 2\n")
-    cpu_write_block(secC_start, secC_end, 10, file, 0)
+    file.write("Barrier 1 3\n")
+    cpu_write_block(secA_start, secA_end, 80, file, 0)
+
+with open('cpu1.txt', 'w') as file:
+    cpu_write_block(secB_start, secB_end, 30, file, 1)
+    file.write("Barrier 1 3\n")
     file.write("Barrier 2 2\n")
-    cpu_write_block(secD_start, secD_end, 10, file, 0)
-    file.write("Barrier 3 2\n")
+    cpu_write_block(secB_start, secB_end, 70, file, 1)
 
 with open('gpu0.txt', 'w') as file:
     file.write("Barrier 0 2\n")
-    gpu_write_block(secA_start, secA_end, 100, file)
-    file.write("Barrier 1 2\n")
-    gpu_write_block(secB_start, secB_end, 100, file)
+    gpu_write_block(secA_start, secA_end, 20, file)
+    file.write("Barrier 1 3\n")
+    gpu_write_block(secB_start, secB_end, 20, file)
     file.write("Barrier 2 2\n")
-    gpu_write_block(secC_start, secC_end, 100, file)
-    file.write("Barrier 3 2\n")
-    gpu_write_block(secD_start, secD_end, 100, file)
