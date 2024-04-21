@@ -31,15 +31,17 @@ class Translation:
     
     def State_preProcess(self, Msg_type, addr): # typically used for distinguish between reply RepFwdV
         if Msg_type == msg_type.Data:
-            if self.llc.cache.getState_line(addr) == State.OS:
+            if self.llc.cache.getState_line(addr) == State.OVS:
                 return msg_type.Data_V
             else:
+                assert self.llc.cache.getState_line(addr) == State.OS, "Error! Data type translation fail"
                 return msg_type.Data
         elif Msg_type== msg_type.DataOwner:
             if self.llc.cache.getState_line(addr) == State.OV:
                 return msg_type.DataOwner_V
             else:
                 return msg_type.DataOwner
+        return Msg_type
         
     def translate_msg(self, Msg):
         msg = Msg

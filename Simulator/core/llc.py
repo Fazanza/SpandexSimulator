@@ -22,6 +22,7 @@ class LLC_Controller:
         self.current_rep_msg = None
         self.current_mem_msg = None
         self.current_req_msg = None
+        self.is_active = False
         self.clk_cnt = 0
         self.inv_cnt = 0
 
@@ -33,7 +34,7 @@ class LLC_Controller:
     ##  whether eviction can be happen will be handle by is_evict_valid()
     def is_req_qualify(self, addr):
         state = self.cache.getState_line(addr)
-        #print(state)
+        print(state)
         if state == State.I or state == State.O or state == State.V or state == State.S or state == State.VI:
             return True
         else:
@@ -132,7 +133,7 @@ class LLC_Controller:
             self.cache.updateState_line(evict_addr, State.OV)
             # self.cache.updateState_line_word(evict_addr, State.OV)
             self.cache.updateMsgDst(evict_addr, Node.LLC)
-            msg = Msg(msg_type.FwdReqV_E, evict_addr, Node.LLC, self.cache.getOwner(addr), 0, Node.LLC)
+            msg = Msg(msg_type.FwdReqV_E, evict_addr, Node.LLC, self.cache.getOwner(evict_addr), 0, Node.LLC)
             self.generated_msg_queue.enqueue(msg)
             return type.Block
         elif evict_line_state == State.V:
@@ -174,7 +175,7 @@ class LLC_Controller:
 
     # do state transition and generate reponse and send to generated_msg_queue
     def do_transition(self, current_state, input_msg, old_owner):
-        self.generated_msg_queue.clear()
+        #self.generated_msg_queue.clear()
         msg_src = input_msg.src
         msg_addr = input_msg.addr
         owner = old_owner
@@ -215,7 +216,7 @@ class LLC_Controller:
                 elif add_cache_result == True:
                     self.cache.updateState_line(msg_addr, State.VI)
                     self.cache.updateState_word(msg_addr, State.V)
-                    self.cache.updateOwner(msg_src, Node.LLC)
+                    self.cache.updateOwner(msg_addr, Node.LLC)
                     msg = Msg(msg_type.RepWT, msg_addr, Node.LLC, msg_src, 0, Node.NULL)
                     self.generated_msg_queue.enqueue(msg)
                 elif add_cache_result == type.Block:
@@ -483,7 +484,7 @@ class LLC_Controller:
         elif current_state == State.O:
             ###
             if input_msg.msg_type == msg_type.ReqV:
-                self.cache.updateState_line_word(msg_addr, State.OS)
+                self.cache.updateState_line_word(msg_addr, State.OVS)
                 # self.cache.updateState_line(msg_addr, State.OV)
                 self.cache.updateMsgDst(msg_addr, msg_src)
                 msg = Msg(msg_type.FwdReqV, msg_addr, Node.LLC, owner, 0, msg_src)
@@ -594,6 +595,7 @@ class LLC_Controller:
             elif input_msg.msg_type == msg_type.MemRep:
                 self.cache.updateState_line_word(msg_addr, State.V)
                 self.cache.updateOwner(msg_addr, Node.LLC)
+                assert self.cache.getMsgDst(msg_addr) == Node.GPU, f"Error! RepV should not send to Node{self.cache.getMsgDst(msg_addr)}"
                 msg = Msg(msg_type.RepV, msg_addr, Node.LLC, self.cache.getMsgDst(msg_addr), 0, Node.NULL)
                 self.generated_msg_queue.enqueue(msg)
             ###
@@ -730,15 +732,42 @@ class LLC_Controller:
                 return type.Error
             else:
                 return type.Block
+        ###########################################################
+        elif current_state == State.OVS:
+            ###
+            if input_msg.msg_type == msg_type.RepFwdV:
+                self.cache.updateState_line_word(msg_addr, State.S)
+                assert self.cache.getMsgDst(msg_addr) == Node.GPU, f"Error! RepV should not send to Node{self.cache.getMsgDst(msg_addr)}"
+                msg = Msg(msg_type.RepV, msg_addr, Node.LLC, self.cache.getMsgDst(msg_addr), 0 , Node.NULL)
+                self.generated_msg_queue.enqueue(msg)
+                self.cache.updateOwner(msg_addr, Node.LLC)
+            ###
+            elif input_msg.msg_type == msg_type.ReqWB:
+                if msg_src == owner:
+                    return type.Block
+                msg = Msg(msg_type.RepWB, msg_addr, Node.LLC, msg_src, 0)
+                self.generated_msg_queue.enqueue(msg)
+            ###
+            elif input_msg.msg_type == msg_type.MemReq:
+                return type.Error
+            ###
+            elif input_msg.msg_type == msg_type.RepRvkO:
+                return type.Error
+            ###
+            elif input_msg.msg_type == msg_type.RepFwdV_E:
+                return type.Error
+            else:
+                return type.Block
         
         ###########################################################
         elif current_state == State.OS:
             ###
             if input_msg.msg_type == msg_type.RepRvkO:
                 msg = Msg(msg_type.RepS, msg_addr, Node.LLC, self.cache.getMsgDst(msg_addr), 0 , Node.NULL)
+                input_msg.print_msg()
                 self.generated_msg_queue.enqueue(msg)
                 self.cache.updateState_line_word(msg_addr, State.S)
-                self.cache.updateOwner(msg_src, Node.LLC)
+                self.cache.updateOwner(msg_addr, Node.LLC)
             ###
             elif input_msg.msg_type == msg_type.ReqWB:
                 if msg_src == owner:
@@ -747,10 +776,7 @@ class LLC_Controller:
                 self.generated_msg_queue.enqueue(msg)
             ###
             elif input_msg.msg_type == msg_type.RepFwdV:
-                self.cache.updateState_line_word(msg_addr, State.S)
-                msg = Msg(msg_type.RepV, msg_addr, Node.LLC, self.cache.getMsgDst(msg_addr), 0 , Node.NULL)
-                self.generated_msg_queue.enqueue(msg)
-                self.cache.updateOwner(msg_addr, Node.LLC)
+                return type.Error
             ###
             elif input_msg.msg_type == msg_type.MemReq:
                 return type.Error
@@ -767,7 +793,7 @@ class LLC_Controller:
                 msg = Msg(msg_type.RepWT, msg_addr, Node.LLC, self.cache.getMsgDst(msg_addr), 0 , Node.NULL)
                 self.generated_msg_queue.enqueue(msg)
                 self.cache.updateState_line_word(msg_addr, State.V)
-                self.cache.updateOwner(msg_src, Node.LLC)
+                self.cache.updateOwner(msg_addr, Node.LLC)
             ###
             elif input_msg.msg_type == msg_type.RepFwdV_E: # only for cache eviction situation
                 self.cache.updateState_line_word(msg_addr, State.V)
@@ -881,6 +907,9 @@ class LLC_Controller:
     def take_generated_msg(self):
         assert self.generated_msg_queue.is_empty() == False, "Error! Can not take msg out from LLC generated msg queue"
         self.generated_msg_queue.dequeue()
+
+    def is_active(self):
+        return not self.is_active
     
     def LLC_run(self):
         print(f"#################### LLC Run at Clk Cnt {self.clk_cnt} ####################")
@@ -924,4 +953,5 @@ class LLC_Controller:
                 assert result != type.Error, "Error! LLC have error when to execute request"
 
         ## clk_cnt ++
+        self.is_active = not (self.rep_msg_box.is_empty() and self.req_msg_box.is_empty() and self.mem_req_queue.is_empty())
         self.clk_cnt = self.clk_cnt + 1

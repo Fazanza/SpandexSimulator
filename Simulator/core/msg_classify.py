@@ -22,8 +22,12 @@ class msg_classify:
         msg_type.FwdReqOdata:       msg_class.Request   ,
         msg_type.FwdRvkO    :       msg_class.Request   ,
         msg_type.Inv        :       msg_class.Request   ,
+        msg_type.GetS       :       msg_class.Request   ,
+        msg_type.GetM       :       msg_class.Request   ,
+        msg_type.PutM       :       msg_class.Request   ,
         msg_type.FwdGetS    :       msg_class.Request   ,
         msg_type.FwdGetM    :       msg_class.Request   ,
+        msg_type.Data       :       msg_class.Response  ,
         msg_type.DataDir    :       msg_class.Response  ,
         msg_type.DataOwner  :       msg_class.Response  ,
         msg_type.PutAck     :       msg_class.Response  

@@ -14,6 +14,7 @@ class GPU_Controller:
         self.rep_msg_box = Queue()
         self.inst_buffer = Queue()
         self.barrier_map = Map()
+        self.inst_empty = False
         self.finish = False
         self.clk_cnt = 0
         self.generated_msg = None # the message which send to LLC
@@ -60,7 +61,7 @@ class GPU_Controller:
     # get new instruction from instruction buffer
     def get_new_inst(self):
         if self.inst_buffer.is_empty():
-            self.finish = True
+            self.inst_empty = True
             return None
         else:
             return self.inst_buffer.peek()
@@ -258,8 +259,8 @@ class GPU_Controller:
 
         inst = self.get_new_inst()
         if inst == None:
-            self.finish = True
-            print("GPU finish execution")
+            self.inst_empty = True
+            # print("GPU finish execution")
             return 0
         self.current_inst = inst
         if inst.inst_type == Inst_type.Load:
@@ -300,13 +301,14 @@ class GPU_Controller:
         elif inst.inst_type == Inst_type.Barrier:
             print("BARRIER UPDATE")
             self.update_barrier(inst.barrier_name)
+            self.barrier_name = inst.barrier_name
+            self.barrier_name_observed = inst.barrier_name
             if self.barrier_map.search(inst.barrier_name) != 0:
-                self.barrier_name = inst.barrier_name
-                self.barrier_name_observed = inst.barrier_name
                 self.wait = True
             else: # this barrier instruction has already be poped by update_barrier()
                 # assert self.barrier_name == Node and self.barrier_name_observed == None, "Error, GPU has wrong barrier output"
                 assert self.generated_msg == None, "Error! GPU barrier will not generated a msg"
+                self.barrier_name = None
                 self.wait  = False
                 self.cache.clear() # self invalidation after pass barrier
             assert self.generated_msg == None, "Error! GPU has generated msg when execute Barrier instruction"
@@ -320,7 +322,11 @@ class GPU_Controller:
         # if instruction is blocked, it can not generate msg, and will set self.wait = True during transaction
         # if self.wait == True:
         #     assert self.generated_msg == None, "Error! GPU wait for inter reason should not generate msg"
+        self.finish = self.inst_empty and self.rep_msg_box.is_empty()
+        if self.finish == True:
+            return 0
         if self.generated_msg == None and self.wait == False:
+            if not self.inst_buffer.is_empty():
                 self.inst_buffer.dequeue()
         if self.generated_msg != None and self.wait == False:
             self.wait = True

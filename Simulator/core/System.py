@@ -4,10 +4,10 @@ from core.msg_classify import *
 class System:
     def __init__(self, Device_Map, Device_List, Core_List, CPU_List, GPU_List, TPU):
         self.Device_Map = Device_Map
-        self.Device_List = Device_List,
-        self.Core_List = Core_List,
-        self.CPU_List = CPU_List,
-        self.GPU_List = GPU_List,
+        self.Device_List = Device_List
+        self.Core_List = Core_List
+        self.CPU_List = CPU_List
+        self.GPU_List = GPU_List
         self.TPU = TPU # used to translate request between CPU and LLC
         self.MsgClassify = msg_classify()
         self.system_clk = 0
@@ -16,14 +16,14 @@ class System:
     def get_clk(self):
         return self.system_clk
     
-    def round_robin(queue):
+    def round_robin(self, queue):
         temp = queue[0]
         for i in range(1, len(queue)):
             queue[i-1] = queue[i]
         queue[len(queue)-1] = temp
         return queue
 
-    def is_member(element, list):
+    def is_member(self,element, list):
         return element in list
     
     ### Every Node do not require any msg, it just send msg to the other Node
@@ -31,6 +31,8 @@ class System:
     def LLC_RUN(self, LLC_Node):
         LLC = self.Device_Map.search(LLC_Node)
         LLC.LLC_run()
+        a = 1
+        print(a)
         while LLC.get_generated_msg() != None:
             generated_msg = LLC.get_generated_msg()
             msg_class = self.MsgClassify.get_value(generated_msg.msg_type)
@@ -59,9 +61,9 @@ class System:
         if GPU.get_generated_msg() != None:
             generated_msg = GPU.get_generated_msg()
             msg_class = self.MsgClassify.get_value(generated_msg.msg_type)
-            assert msg_class == msg_class.request, "Error! GPU is generated Response type of msg"
+            assert msg_class == msg_class.Request, "Error! GPU is generated Response type of msg"
             assert generated_msg.dst == Node.LLC, "Error! GPU is sending Request to Node other than LLC"
-            req_msg_taken = self.Device_Map.search(Node.LLC).receieve_req_msg # check if LLC req_msg_box has enough space to enqueue
+            req_msg_taken = self.Device_Map.search(Node.LLC).receieve_req_msg(generated_msg) # check if LLC req_msg_box has enough space to enqueue
             if req_msg_taken == True:
                 GPU.take_generated_msg()
         GPU.GPU_POST_RUN()
@@ -74,9 +76,9 @@ class System:
         if CPU_barrier != None:
             for GPUs in self.GPU_List:
                 self.Device_Map.search(GPUs).update_barrier(CPU_barrier)
-            for CPUs in self.CPU_List:
-                if self.Device_Map.search(CPUs) != CPU:
-                    self.Device_Map.search(CPUs).update_barrier(CPU_barrier)
+            for CPU_Node in self.CPU_List:
+                if CPU_Node != CPU.Node:
+                    self.Device_Map.search(CPU_Node).update_barrier(CPU_barrier)
 
         # do generate msg
         while CPU.get_generated_msg() != None:
@@ -102,19 +104,24 @@ class System:
             self.is_finish = True
             for core in self.Core_List:
                 self.is_finish = self.is_finish and self.Device_Map.search(core).is_finish()
+            self.is_finish = self.is_finish and (not self.Device_Map.search(Node.LLC).is_active)
+            
             if self.is_finish == True:
-                print("All Program Finish ! ! !")
+                print(f"All Program Finish at {self.system_clk}! ! !")
                 return 0
             
-            for i in len(self.Core_List):
+            for i in range(len(self.Core_List)):
                 if self.is_member(self.Core_List[i], self.CPU_List):
                     self.CPU_RUN(self.Core_List[i])
                 elif self.is_member(self.Core_List[i], self.GPU_List):
                     self.GPU_RUN(self.Core_List[i])
             self.LLC_RUN(Node.LLC)
 
-            self.Core_List = self.round_robin(self.Core_List)
+            #self.Core_List = self.round_robin(self.Core_List)
             self.system_clk = self.system_clk + 1
+            if self.system_clk > 50:
+                print("Overtime !")
+                quit()
 
 # ### Every Node do not require any msg, it just send msg to the other Node
 # ### when Every Node run, it just read it's own req and rep queue

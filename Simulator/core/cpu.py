@@ -17,6 +17,7 @@ class CPU_Controller:
         self.generated_msg_queue = Queue() # the message which send to LLC
         self.barrier_map = Map()
         self.finish = False
+        self.inst_empty = False
         self.clk_cnt = 0
         self.wait = False
         self.current_inst = None
@@ -24,7 +25,6 @@ class CPU_Controller:
         self.current_req_msg = None
         self.barrier_name = None
         self.barrier_name_observed = None
-        self.not_taken_req = None # the not taken request from CPU to LLC in previous cycle
         self.Node = Node
         self.Fill_Inst(file_name)
         
@@ -75,7 +75,7 @@ class CPU_Controller:
     # get new instruction from instruction buffer
     def get_new_inst(self):
         if self.inst_buffer.is_empty():
-            self.finish = True
+            self.inst_empty = True
             return None
         else:
             return self.inst_buffer.peek()
@@ -128,7 +128,7 @@ class CPU_Controller:
                 self.cache.updateState_line(msg_addr, State.IM_D)
             ###
             elif input_msg.msg_type == msg_type.Inv:
-                assert input_msg.Node == Node.LLC, "Error! Inv for CPU should only come from LLC"
+                assert input_msg.src == Node.LLC, "Error! Inv for CPU should only come from LLC"
                 if input_msg.target_addr != None:
                     gen_msg = Msg(msg_type.InvAck, input_msg.target_addr, self.Node, Node.LLC)
                 else:
@@ -146,7 +146,7 @@ class CPU_Controller:
                 return type.Block, None
             ###
             elif input_msg.msg_type == msg_type.Inv:
-                assert input_msg.Node == Node.LLC, "Error! Inv for CPU should only come from LLC"
+                assert input_msg.src == Node.LLC, "Error! Inv for CPU should only come from LLC"
                 if input_msg.target_addr != None:
                     gen_msg = Msg(msg_type.InvAck, input_msg.target_addr, self.Node, Node.LLC)
                 else:
@@ -159,6 +159,11 @@ class CPU_Controller:
             
         ###########################
         elif current_state == State.IM_D:
+            if self.Node == Node.CPU0:
+                print("EEEE")
+                print(input_msg.msg_type)
+                print(input_msg.addr)
+                print(input_msg.src)
             ###
             if input_msg.msg_type == msg_type.Load:
                 return type.Block, None
@@ -167,11 +172,17 @@ class CPU_Controller:
                 return type.Block, None
             ###
             elif input_msg.msg_type == msg_type.Inv:
-                assert input_msg.Node == Node.LLC, "Error! Inv for CPU should only come from LLC"
+                assert input_msg.src == Node.LLC, "Error! Inv for CPU should only come from LLC"
                 if input_msg.target_addr != None:
                     gen_msg = Msg(msg_type.InvAck, input_msg.target_addr, self.Node, Node.LLC)
                 else:
                     gen_msg = Msg(msg_type.InvAck, msg_addr, self.Node, Node.LLC)
+            ###
+            elif input_msg.msg_type == msg_type.FwdGetS:
+                return type.Block, None
+                ###
+            elif input_msg.msg_type == msg_type.FwdGetM:
+                return type.Block, None
             ###
             elif input_msg.msg_type == msg_type.DataDir:
                 self.cache.updateState_line(msg_addr, State.M)
@@ -188,11 +199,12 @@ class CPU_Controller:
                 return type.Success, None
             ###
             elif input_msg.msg_type == msg_type.Store:
-                gen_msg = Msg(msg_type.GetM, input_msg.target_addr, self.Node, Node.LLC)
+                gen_msg = Msg(msg_type.GetM, msg_addr, self.Node, Node.LLC)
                 self.cache.updateState_line(msg_addr, State.SM_D)
             ###
             elif input_msg.msg_type == msg_type.Inv:
-                assert input_msg.Node == Node.LLC, "Error! Inv for CPU should only come from LLC"
+                print(input_msg.src)
+                assert input_msg.src == Node.LLC, "Error! Inv for CPU should only come from LLC"
                 if input_msg.target_addr != None:
                     gen_msg = Msg(msg_type.InvAck, input_msg.target_addr, self.Node, Node.LLC)
                 else:
@@ -216,7 +228,7 @@ class CPU_Controller:
                 return type.Block, None
             ###
             elif input_msg.msg_type == msg_type.Inv:
-                assert input_msg.Node == Node.LLC, "Error! Inv for CPU should only come from LLC"
+                assert input_msg.src == Node.LLC, "Error! Inv for CPU should only come from LLC"
                 if input_msg.target_addr != None:
                     gen_msg = Msg(msg_type.InvAck, input_msg.target_addr, self.Node, Node.LLC)
                 else:
@@ -241,12 +253,12 @@ class CPU_Controller:
                 self.cache.updateState_line(msg_addr, State.S)
             ###
             elif input_msg.msg_type == msg_type.FwdGetM:
-                assert input_msg.fwd_dst != Node.NULL and input_msg.fwd_dst != Node.LLC, f"Error! CPU receieve GetM and forward data to Wrong Node: {input_msg.fwd_dst}"
+                assert input_msg.fwd_dst != Node.NULL, f"Error! CPU receieve GetM and forward data to Wrong Node: {input_msg.fwd_dst}"
                 gen_msg = Msg(msg_type.DataOwner, msg_addr, self.Node, input_msg.fwd_dst)
                 self.cache.updateState_line(msg_addr, State.I)
             ###
             elif input_msg.msg_type == msg_type.Inv:
-                assert input_msg.Node == Node.LLC, "Error! Inv for CPU should only come from LLC"
+                assert input_msg.src == Node.LLC, "Error! Inv for CPU should only come from LLC"
                 if input_msg.target_addr != None:
                     gen_msg = Msg(msg_type.InvAck, input_msg.target_addr, self.Node, Node.LLC)
                 else:
@@ -264,7 +276,7 @@ class CPU_Controller:
                 return type.Block, None
             ###
             elif input_msg.msg_type == msg_type.FwdGetS:
-                gen_msg = Msg(msg_type.DataDir, msg_addr, self.Node, Node.LLC)
+                gen_msg = Msg(msg_type.Data, msg_addr, self.Node, Node.LLC)
                 self.cache.updateState_line(msg_addr, State.SI_A)
             ###
             elif input_msg.msg_type == msg_type.FwdGetM:
@@ -273,7 +285,7 @@ class CPU_Controller:
                 self.cache.updateState_line(msg_addr, State.II_A)
             ###
             elif input_msg.msg_type == msg_type.Inv:
-                assert input_msg.Node == Node.LLC, "Error! Inv for CPU should only come from LLC"
+                assert input_msg.src == Node.LLC, "Error! Inv for CPU should only come from LLC"
                 if input_msg.target_addr != None:
                     gen_msg = Msg(msg_type.InvAck, input_msg.target_addr, self.Node, Node.LLC)
                 else:
@@ -294,7 +306,7 @@ class CPU_Controller:
                 return type.Block, None
             ###
             elif input_msg.msg_type == msg_type.Inv:
-                assert input_msg.Node == Node.LLC, "Error! Inv for CPU should only come from LLC"
+                assert input_msg.src == Node.LLC, "Error! Inv for CPU should only come from LLC"
                 if input_msg.target_addr != None:
                     gen_msg = Msg(msg_type.InvAck, input_msg.target_addr, self.Node, Node.LLC)
                 else:
@@ -316,7 +328,7 @@ class CPU_Controller:
                 return type.Block, None
             ###
             elif input_msg.msg_type == msg_type.Inv:
-                assert input_msg.Node == Node.LLC, "Error! Inv for CPU should only come from LLC"
+                assert input_msg.src == Node.LLC, "Error! Inv for CPU should only come from LLC"
                 if input_msg.target_addr != None:
                     gen_msg = Msg(msg_type.InvAck, input_msg.target_addr, self.Node, Node.LLC)
                 else:
@@ -369,12 +381,16 @@ class CPU_Controller:
 
     def CPU_run(self):
         print()
-        print(f"#################### CPU Run at Clk Cnt {self.clk_cnt} ####################")
+        print(f"#################### CPU {self.Node} Run at Clk Cnt {self.clk_cnt} ####################")
         generated_queue_empty = self.generated_msg_queue.is_empty()
         # First execute response
         rep_msg = self.get_new_rep()
         self.current_rep_msg = rep_msg
         if rep_msg != None:
+            assert rep_msg.msg_type == msg_type.DataDir or rep_msg.msg_type == msg_type.DataOwner or rep_msg.msg_type == msg_type.PutAck , f"Error! CPU response box has wrong msg_type {rep_msg.msg_type}"
+            if (rep_msg.msg_type == msg_type.DataDir or rep_msg.msg_type == msg_type.DataOwner):
+                assert rep_msg.addr == self.current_inst.addr, "Error! CPU receieve a request which do not have match addr"
+
             current_state = self.get_current_state(rep_msg)
             result, gen_msg = self.do_transition(current_state, rep_msg)
             assert result != type.Error, "Error! CPU wrong when take rep msg"
@@ -392,7 +408,7 @@ class CPU_Controller:
             current_state = self.get_current_state(req_msg)
             result, gen_msg = self.do_transition(current_state, req_msg)
             print(req_msg.addr)
-            assert result != type.Error, "Error! CPU wrong when taking request"
+            assert result != type.Error, f"Error! CPU wrong when taking request"
             if result == type.Success:
                 assert gen_msg != None, "Error! CPU do not generate msg after execute a request"
                 if generated_queue_empty == True:
@@ -403,8 +419,9 @@ class CPU_Controller:
                 self.cache.renewAccess(req_msg.addr)
         
         # Third execute an instruction
-        # 1. wait for barrier
-        # 2. wait for LLC message queue available
+        # 1. always wait if Load or Store is success and cache miss
+        # 2. wait if can not do valid evict
+        # 2. wait for Barrier
         if self.wait == True:
             if self.current_inst.inst_type == Inst_type.Barrier: # should not continue
                 current_barrier_num = self.barrier_map.search(self.barrier_name)
@@ -412,16 +429,19 @@ class CPU_Controller:
                     self.wait = False
                 return 0
             elif self.current_inst.inst_type == Inst_type.Load or self.current_inst.inst_type == Inst_type.Store:
-                if self.generated_msg_queue.is_member(self.not_taken_req) and self.not_taken_req != None: # Previous CPU to LLC request is not taken by LLC, should keep wait
-                    return 0
-                else: # CPU wait because Last instruction has been blocked because there is existing request on that addr, should retry
+                if rep_msg != None: # CPU wait if there is no rep on current Load or Store instruction
+                    assert self.is_inst_qualified(rep_msg.addr), "Error! CPU receieve a response and not transfer to State State"
+                    if rep_msg.msg_type != msg_type.PutAck: # because PutAck means current inst is blocked because invalid eviction, should retry
+                        self.inst_buffer.dequeue()
                     self.wait = False
+                else: # should continue stall
+                    return 0
         
         # assert self.generated_msg == None, "Error! CPU generate new message when execute response"
 
         inst = self.get_new_inst()
         if inst == None:
-            self.finish = True
+            self.empty = True
             print("CPU finish execution")
             return 0
         self.current_inst = inst
@@ -435,10 +455,12 @@ class CPU_Controller:
                 self.wait = True
                 
             elif load_result == type.Success:
-                if gen_msg != None:
+                if gen_msg != None: # else mean hit
+                    self.wait = True
                     self.generated_msg_queue.enqueue(gen_msg)
+                else:
+                    assert self.wait == False, "Error! CPU should not wait on Load hit"
                 self.cache.renewAccess(inst_msg.addr)
-                assert self.wait == False, "Error! CPU is waiting after a Success Load"
 
         elif inst.inst_type == Inst_type.Store:
             inst_msg = Msg(msg_type.Store, inst.addr, self.Node, self.Node, 0, Node.NULL)
@@ -451,30 +473,33 @@ class CPU_Controller:
                 
             elif store_result == type.Success:
                 if gen_msg != None:
+                    self.wait = True # else mean hit
                     self.generated_msg_queue.enqueue(gen_msg)
+                else:
+                    assert self.wait == False, "Error! CPU should not wait on Store hit"
                 self.cache.renewAccess(inst_msg.addr)
-                assert self.wait == False, "Error! CPU is waiting after a Success Store"
             
         elif inst.inst_type == Inst_type.Barrier:
             print("BARRIER UPDATE")
             self.update_barrier(inst.barrier_name)
             if self.barrier_map.search(inst.barrier_name) != 0:
                 self.barrier_name = inst.barrier_name
-                self.barrier_name_observed = inst.barrier_name
                 self.wait = True
             else: # this barrier instruction has already be poped by update_barrier()
                 self.wait  = False
+            self.barrier_name_observed = inst.barrier_name
             return 0
 
 
     ## this function should take the response from Top, have to follow CPU_RUN() and *** have already taken generated msg ***
     #  deal with whether the previous generated msg can be taken by LLC
     def CPU_POST_RUN(self):
-        if self.generated_msg_queue.is_empty() == True and self.wait == False:
-            self.not_taken_req = None
+        self.finish = self.inst_empty and self.req_msg_box.is_empty() and  self.rep_msg_box.is_empty()
+        if self.finish == True:
+            return 0
+        if self.wait == False:
             self.inst_buffer.dequeue()
-        if self.generated_msg_queue.is_empty() == False and self.wait == False:
-            assert self.generated_msg_queue.size() == 1, "Error! CPU has more then one not taken generated request"
-            self.not_taken_req = self.generated_msg_queue.peek()
-            self.wait = True
+        # if self.generated_msg_queue.is_empty() == False and self.wait == False:
+        #     assert self.generated_msg_queue.size() == 1, "Error! CPU has more then one not taken generated request"
+        #     self.wait = True
         self.clk_cnt = self.clk_cnt + 1
