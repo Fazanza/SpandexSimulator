@@ -62,7 +62,6 @@ class GPU_Controller:
     # get new instruction from instruction buffer
     def get_new_inst(self):
         if self.inst_buffer.is_empty():
-            self.inst_empty = True
             return None
         else:
             return self.inst_buffer.peek()

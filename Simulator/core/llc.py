@@ -439,7 +439,8 @@ class LLC_Controller:
             elif input_msg.msg_type == msg_type.ReqS:
                 msg = Msg(msg_type.RepS, msg_addr, Node.LLC, msg_src, 0, Node.NULL)
                 self.generated_msg_queue.enqueue(msg)
-                self.cache.add_sharer(msg_addr, msg_src) # can only be cpu
+                if msg_src not in self.cache.get_sharer(msg_addr):
+                    self.cache.add_sharer(msg_addr, msg_src) # can only be cpu
             ###
             elif input_msg.msg_type == msg_type.ReqWT:
                 self.cache.updateState_line_word(msg_addr, State.I)

@@ -10,8 +10,8 @@ from core.System import *
 
 def main_test1():
     llc_cache_size = 512
-    cpu_cache_size = 512
-    gpu_cache_size = 512
+    cpu_cache_size = 128
+    gpu_cache_size = 128
     ways = 2
     line_size = 16
     memory_size = 8192
@@ -48,8 +48,8 @@ def main_test1():
 
 def main_test2():
     llc_cache_size = 512
-    cpu_cache_size = 512
-    gpu_cache_size = 512
+    cpu_cache_size = 256
+    gpu_cache_size = 256
     ways = 2
     line_size = 16
     memory_size = 8192
@@ -59,11 +59,11 @@ def main_test2():
     llc_max_delay = 2
     llc_mem_delay = 3
     #
-    gpu0_trace = "Testcase/1c4g/gpu0.txt"
-    gpu1_trace = "Testcase/1c4g/gpu1.txt"
-    gpu2_trace = "Testcase/1c4g/gpu2.txt"
-    gpu3_trace = "Testcase/1c4g/gpu3.txt"
-    cpu0_trace = "Testcase/1c4g/cpu0.txt"
+    gpu0_trace = "../Testcase/1c4g/gpu0.txt"
+    gpu1_trace = "../Testcase/1c4g/gpu1.txt"
+    gpu2_trace = "../Testcase/1c4g/gpu2.txt"
+    gpu3_trace = "../Testcase/1c4g/gpu3.txt"
+    cpu0_trace = "../Testcase/1c4g/cpu0.txt"
 
     # instantiate the object
     LLC = LLC_Controller(llc_cache_size, ways, line_size, memory_size, llc_req_box_size, llc_min_delay, llc_max_delay, llc_mem_delay)
@@ -87,7 +87,7 @@ def main_test2():
     CPU_List = [Node.CPU0]
     GPU_List = [Node.GPU0, Node.GPU1, Node.GPU2, Node.GPU3]
 
-    system = System(Device_Map, Device_List, Core_List, CPU_List, GPU_List, TPU, 5000)
+    system = System(Device_Map, Device_List, Core_List, CPU_List, GPU_List, TPU, 500)
 
     system.SYSTEM_RUN()
 
@@ -277,4 +277,4 @@ def main_test6():
     return 0
 
 if __name__ == '__main__':
-    main_test1()
+    main_test2()
