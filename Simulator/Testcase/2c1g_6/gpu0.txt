@@ -1,0 +1,43 @@
+Barrier 0 2
+st 516
+ld 542
+st 524
+st 538
+ld 538
+ld 539
+st 537
+st 538
+st 539
+st 520
+st 527
+st 515
+ld 537
+st 513
+ld 515
+ld 541
+ld 534
+st 543
+st 535
+st 514
+Barrier 1 3
+st 562
+ld 565
+st 546
+st 553
+st 558
+st 570
+ld 546
+st 553
+ld 560
+st 561
+ld 547
+st 556
+st 567
+st 559
+st 567
+ld 562
+st 566
+ld 571
+ld 560
+ld 570
+Barrier 2 2

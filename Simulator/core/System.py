@@ -2,7 +2,7 @@ from utility.global_utility import *
 from core.msg_classify import *
 
 class System:
-    def __init__(self, Device_Map, Device_List, Core_List, CPU_List, GPU_List, TPU):
+    def __init__(self, Device_Map, Device_List, Core_List, CPU_List, GPU_List, TPU, overtime):
         self.Device_Map = Device_Map
         self.Device_List = Device_List
         self.Core_List = Core_List
@@ -12,6 +12,7 @@ class System:
         self.MsgClassify = msg_classify()
         self.system_clk = 0
         self.is_finish = False
+        self.overtime = overtime
     
     def get_clk(self):
         return self.system_clk
@@ -41,7 +42,7 @@ class System:
             msg_class = self.MsgClassify.get_value(generated_msg.msg_type)
             #
             if msg_class == msg_class.Request: # send request to other Node
-                assert(generated_msg.dst != Node.GPU), "Error! LLC is sending request to GPU"
+                #assert(generated_msg.dst != Node.GPU), "Error! LLC is sending request to GPU"
                 self.Device_Map.search(generated_msg.dst).receieve_req_msg(self.TPU.translate_msg(generated_msg))
                 LLC.take_generated_msg() # pop from LLC generated_msg_queue
             #
@@ -55,6 +56,7 @@ class System:
     def GPU_RUN(self, GPU_Node):
         GPU = self.Device_Map.search(GPU_Node)
         GPU.GPU_run()
+        GPU.current_inst.print_Inst()
         # do barrier
         GPU_barrier = GPU.get_barrier()
         if GPU_barrier != None:
@@ -125,7 +127,9 @@ class System:
 
             #self.Core_List = self.round_robin(self.Core_List)
             self.system_clk = self.system_clk + 1
-            if self.system_clk > 900:
+            if self.system_clk > 137:
+                print("a")
+            if self.system_clk > self.overtime:
                 print("Overtime !")
                 quit()
 

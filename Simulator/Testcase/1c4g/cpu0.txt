@@ -1,0 +1,44 @@
+ld 1
+ld 28
+ld 140
+ld 135
+ld 513
+ld 5
+st 155
+ld 526
+ld 133
+ld 10
+Barrier 0 2
+ld 12
+st 156
+ld 573
+ld 17
+ld 21
+ld 12
+ld 149
+st 21
+st 556
+ld 135
+Barrier 1 2
+ld 587
+st 23
+ld 140
+ld 601
+ld 144
+st 22
+st 5
+ld 590
+ld 591
+st 587
+Barrier 2 2
+ld 11
+ld 23
+ld 14
+st 154
+st 627
+ld 0
+ld 128
+st 20
+st 29
+ld 139
+Barrier 3 2
