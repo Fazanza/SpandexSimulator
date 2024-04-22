@@ -4,11 +4,14 @@ from collections import deque
 
 class Node(Enum):
     LLC = auto()
+    GPU0 = auto()
+    GPU1 = auto()
+    GPU2 = auto()
+    GPU3 = auto()
     CPU0 = auto()
     CPU1 = auto()
     CPU2 = auto()
     CPU3 = auto()
-    GPU = auto()
     MEM = auto()
     NULL = auto()
 

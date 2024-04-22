@@ -9,8 +9,8 @@ from core.gpu import *
 
 class GPU_Controller:
 
-    def __init__(self, cache_size, ways, line_size, memory_size, file_name):
-        self.cache      = GPU_cache(cache_size, ways, line_size, memory_size)
+    def __init__(self, cache_size, ways, line_size, memory_size, file_name, Node):
+        self.cache = GPU_cache(cache_size, ways, line_size, memory_size)
         self.rep_msg_box = Queue()
         self.inst_buffer = Queue()
         self.barrier_map = Map()
@@ -24,7 +24,8 @@ class GPU_Controller:
         self.barrier_name = None
         self.barrier_name_observed = None
         self.Fill_Inst(file_name)
-        
+        self.Node = Node
+
     def Fill_Inst(self, file_name):
         with open(file_name, 'r') as file:
             pc = 0
@@ -100,11 +101,11 @@ class GPU_Controller:
                 return type.Block
             ###
             if input_msg.msg_type == msg_type.Load:
-                self.generated_msg = Msg(msg_type.ReqV, msg_addr, Node.GPU, Node.LLC, 0, Node.NULL)
+                self.generated_msg = Msg(msg_type.ReqV, msg_addr, self.Node, Node.LLC, 0, Node.NULL)
                 self.cache.updateState_line_word(msg_addr, State.IV)
             ###
             elif input_msg.msg_type == msg_type.Store:
-                self.generated_msg = Msg(msg_type.ReqWT, msg_addr, Node.GPU, Node.LLC, 0, Node.NULL)
+                self.generated_msg = Msg(msg_type.ReqWT, msg_addr, self.Node, Node.LLC, 0, Node.NULL)
                 self.cache.updateState_word(msg_addr, State.WTV)
                 self.cache.updateState_line(msg_addr, State.WTV)
             ###
@@ -118,7 +119,7 @@ class GPU_Controller:
                return type.Success
             ###
             elif input_msg.msg_type == msg_type.Store:
-                self.generated_msg = Msg(msg_type.ReqWT, msg_addr, Node.GPU, Node.LLC, 0, Node.NULL)
+                self.generated_msg = Msg(msg_type.ReqWT, msg_addr, self.Node, Node.LLC, 0, Node.NULL)
                 self.cache.updateState_word(msg_addr, State.WTV_L)
                 self.cache.updateState_line(msg_addr, State.WTV_L)
             ###
@@ -145,12 +146,12 @@ class GPU_Controller:
             ###
             if input_msg.msg_type == msg_type.Load:
                 self.cache.updateState_line_word(msg_addr, State.IV)
-                self.generated_msg = Msg(msg_type.ReqV, msg_addr, Node.GPU, Node.LLC, 0, Node.NULL)
+                self.generated_msg = Msg(msg_type.ReqV, msg_addr, self.Node, Node.LLC, 0, Node.NULL)
             ###
             elif input_msg.msg_type == msg_type.Store:
                 self.cache.updateState_line(msg_addr, State.WTV)
                 self.cache.updateState_word(msg_addr, State.WTV)
-                self.generated_msg = Msg(msg_type.ReqWT, msg_addr, Node.GPU, Node.LLC, 0, Node.NULL)
+                self.generated_msg = Msg(msg_type.ReqWT, msg_addr, self.Node, Node.LLC, 0, Node.NULL)
             ###
             else:
                 return type.Error
@@ -265,10 +266,10 @@ class GPU_Controller:
         self.current_inst = inst
         if inst.inst_type == Inst_type.Load:
             # if self.is_inst_qualified(inst.addr) == True:
-            #     inst_msg = Msg(msg_type.Load, inst.addr, Node.GPU, Node.GPU, 0, Node.NULL)
+            #     inst_msg = Msg(msg_type.Load, inst.addr, self.Node, self.Node, 0, Node.NULL)
             #     current_state = self.get_current_state(inst_msg)
             #     assert self.do_transition(current_state, inst_msg) == type.Success, "Error! GPU wrong when execute Load instruction"
-            inst_msg = Msg(msg_type.Load, inst.addr, Node.GPU, Node.GPU, 0, Node.NULL)
+            inst_msg = Msg(msg_type.Load, inst.addr, self.Node, self.Node, 0, Node.NULL)
             current_state = self.get_current_state(inst_msg)
             load_result = self.do_transition(current_state, inst_msg)
             assert load_result != type.Error, "Error! GPU wrong when execute Load instruction"
@@ -283,10 +284,10 @@ class GPU_Controller:
 
         elif inst.inst_type == Inst_type.Store:
             # if self.is_inst_qualified(inst.addr) == True:
-            #     inst_msg = Msg(msg_type.Store, inst.addr, Node.GPU, Node.GPU, 0, Node.NULL)
+            #     inst_msg = Msg(msg_type.Store, inst.addr, self.Node, self.Node, 0, Node.NULL)
             #     current_state = self.get_current_state(inst_msg)
             #     assert self.do_transition(current_state, inst_msg) == type.Success, "Error! GPU wrong when execute Store instruction"
-            inst_msg = Msg(msg_type.Store, inst.addr, Node.GPU, Node.GPU, 0, Node.NULL)
+            inst_msg = Msg(msg_type.Store, inst.addr, self.Node, self.Node, 0, Node.NULL)
             current_state = self.get_current_state(inst_msg)
             store_result = self.do_transition(current_state, inst_msg)
             assert store_result != type.Error, "Error! GPU wrong when execute Load instruction"
