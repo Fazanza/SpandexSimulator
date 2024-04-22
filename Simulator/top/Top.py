@@ -13,17 +13,17 @@ def main_test1():
     cpu_cache_size = 512
     gpu_cache_size = 512
     ways = 2
-    line_size = 16
+    line_size = 8
     memory_size = 8192
 
     llc_req_box_size = 10  # max pending request LLC can take
-    llc_min_delay = 1
-    llc_max_delay = 2
-    llc_mem_delay = 3
+    llc_min_delay = 5
+    llc_max_delay = 10
+    llc_mem_delay = 15
     #
-    gpu0_trace = "../Testcase/1c1g/gpu0.txt"
-    cpu0_trace = "../Testcase/1c1g/cpu0.txt"
-    cpu1_trace = "../Testcase/1c1g/cpu1.txt"
+    gpu0_trace = "./Testcase/1c1g/gpu0.txt"
+    cpu0_trace = "./Testcase/1c1g/cpu0.txt"
+    cpu1_trace = "./Testcase/1c1g/cpu1.txt"
 
     # instantiate the object
     LLC = LLC_Controller(llc_cache_size, ways, line_size, memory_size, llc_req_box_size, llc_min_delay, llc_max_delay, llc_mem_delay)
@@ -52,7 +52,7 @@ def main_test2():
     cpu_cache_size = 512
     gpu_cache_size = 512
     ways = 2
-    line_size = 16
+    line_size = 8
     memory_size = 8192
 
     llc_req_box_size = 10  # max pending request LLC can take
@@ -60,11 +60,11 @@ def main_test2():
     llc_max_delay = 2
     llc_mem_delay = 3
     #
-    gpu0_trace = "../Testcase/1c4g/gpu0.txt"
-    gpu1_trace = "../Testcase/1c4g/gpu1.txt"
-    gpu2_trace = "../Testcase/1c4g/gpu2.txt"
-    gpu3_trace = "../Testcase/1c4g/gpu3.txt"
-    cpu0_trace = "../Testcase/1c4g/cpu0.txt"
+    gpu0_trace = "./Testcase/1c4g/gpu0.txt"
+    gpu1_trace = "./Testcase/1c4g/gpu1.txt"
+    gpu2_trace = "./Testcase/1c4g/gpu2.txt"
+    gpu3_trace = "./Testcase/1c4g/gpu3.txt"
+    cpu0_trace = "./Testcase/1c4g/cpu0.txt"
 
     # instantiate the object
     LLC = LLC_Controller(llc_cache_size, ways, line_size, memory_size, llc_req_box_size, llc_min_delay, llc_max_delay, llc_mem_delay)
@@ -99,19 +99,19 @@ def main_test3():
     cpu_cache_size = 512
     gpu_cache_size = 512
     ways = 2
-    line_size = 4
+    line_size = 8
     memory_size = 8192
 
     llc_req_box_size = 10  # max pending request LLC can take
-    llc_min_delay = 3
-    llc_max_delay = 6
-    llc_mem_delay = 10
+    llc_min_delay = 1
+    llc_max_delay = 2
+    llc_mem_delay = 3
 
-    cpu0_trace = "../Testcase/4c1g_3/cpu0.txt"
-    cpu1_trace = "../Testcase/4c1g_3/cpu1.txt"
-    cpu2_trace = "../Testcase/4c1g_3/cpu2.txt"
-    cpu3_trace = "../Testcase/4c1g_3/cpu3.txt"
-    gpu0_trace = "../Testcase/4c1g_3/gpu0.txt"
+    cpu0_trace = "./Testcase/4c1g_3/cpu0.txt"
+    cpu1_trace = "./Testcase/4c1g_3/cpu1.txt"
+    cpu2_trace = "./Testcase/4c1g_3/cpu2.txt"
+    cpu3_trace = "./Testcase/4c1g_3/cpu3.txt"
+    gpu0_trace = "./Testcase/4c1g_3/gpu0.txt"
 
     # instantiate the object
     LLC = LLC_Controller(llc_cache_size, ways, line_size, memory_size, llc_req_box_size, llc_min_delay, llc_max_delay, llc_mem_delay)
@@ -146,7 +146,7 @@ def main_test4():
     cpu_cache_size = 512
     gpu_cache_size = 512
     ways = 2
-    line_size = 8
+    line_size = 4
     memory_size = 8192
 
     llc_req_box_size = 10  # max pending request LLC can take
@@ -154,11 +154,11 @@ def main_test4():
     llc_max_delay = 2
     llc_mem_delay = 3
 
-    cpu0_trace = "../Testcase/4c1g_4/cpu0.txt"
-    cpu1_trace = "../Testcase/4c1g_4/cpu1.txt"
-    cpu2_trace = "../Testcase/4c1g_4/cpu2.txt"
-    cpu3_trace = "../Testcase/4c1g_4/cpu3.txt"
-    gpu0_trace = "../Testcase/4c1g_4/gpu0.txt"
+    cpu0_trace = "./Testcase/4c1g_4/cpu0.txt"
+    cpu1_trace = "./Testcase/4c1g_4/cpu1.txt"
+    cpu2_trace = "./Testcase/4c1g_4/cpu2.txt"
+    cpu3_trace = "./Testcase/4c1g_4/cpu3.txt"
+    gpu0_trace = "./Testcase/4c1g_4/gpu0.txt"
 
     # instantiate the object
     LLC = LLC_Controller(llc_cache_size, ways, line_size, memory_size, llc_req_box_size, llc_min_delay, llc_max_delay, llc_mem_delay)
@@ -209,9 +209,9 @@ def main_test5():
     # cpu2_trace = "../cpu2_t2.txt"
     # cpu3_trace = "../cpu3_t2.txt"
 
-    gpu0_trace = "../Testcase/2c1g_5/gpu0.txt"
-    cpu0_trace = "../Testcase/2c1g_5/cpu0.txt"
-    cpu1_trace = "../Testcase/2c1g_5/cpu1.txt"
+    gpu0_trace = "./Testcase/2c1g_5/gpu0.txt"
+    cpu0_trace = "./Testcase/2c1g_5/cpu0.txt"
+    cpu1_trace = "./Testcase/2c1g_5/cpu1.txt"
     
     # instantiate the object
     LLC     = LLC_Controller(llc_cache_size, ways, line_size, memory_size, llc_req_box_size, llc_min_delay, llc_max_delay, llc_mem_delay)
@@ -253,9 +253,9 @@ def main_test6():
     llc_max_delay = 2
     llc_mem_delay = 3
     #
-    gpu0_trace = "../Testcase/2c1g_6/gpu0.txt"
-    cpu0_trace = "../Testcase/2c1g_6/cpu0.txt"
-    cpu1_trace = "../Testcase/2c1g_6/cpu1.txt"
+    gpu0_trace = "./Testcase/2c1g_6/gpu0.txt"
+    cpu0_trace = "./Testcase/2c1g_6/cpu0.txt"
+    cpu1_trace = "./Testcase/2c1g_6/cpu1.txt"
     
     # instantiate the object
     LLC     = LLC_Controller(llc_cache_size, ways, line_size, memory_size, llc_req_box_size, llc_min_delay, llc_max_delay, llc_mem_delay)
@@ -284,4 +284,4 @@ def main_test6():
     return 0
 
 if __name__ == '__main__':
-    main_test4()
+    main_test1()
