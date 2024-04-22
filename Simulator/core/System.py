@@ -127,8 +127,6 @@ class System:
 
             #self.Core_List = self.round_robin(self.Core_List)
             self.system_clk = self.system_clk + 1
-            if self.system_clk > 137:
-                print("a")
             if self.system_clk > self.overtime:
                 print("Overtime !")
                 quit()
