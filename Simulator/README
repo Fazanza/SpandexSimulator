@@ -1,6 +1,3 @@
 Please Run The Code at Simulator Level
 For example
-1. run llc test : python3 -m Test.llc_test > output.txt
-2. run gpu test : python3 -m Test.gpu_test > output.txt
-3. run cpu_test : python3 -m Test.cpu_test > output.txt
-   GPU and CPU should read memory trace at Simulator Level
+1. run test : python3 -m top.Top > output.txt
