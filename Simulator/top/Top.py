@@ -12,7 +12,7 @@ def main_test1():
     llc_cache_size = 512
     cpu_cache_size = 128
     gpu_cache_size = 128
-    ways = 2
+    ways = 4
     line_size = 16
     memory_size = 8192
 
@@ -280,7 +280,7 @@ def main_test7():
     llc_cache_size = 512
     cpu_cache_size = 128
     gpu_cache_size = 128
-    ways = 2
+    ways = 4
     line_size = 4
     memory_size = 8192
 
@@ -324,4 +324,4 @@ def main_test7():
     return 0
 
 if __name__ == '__main__':
-    main_test2()
+    main_test7()

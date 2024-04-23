@@ -113,7 +113,7 @@ class proc_cache:
         LRUaddr = LRUtag * self.total_sets * self.line_size - index * self.line_size
         return LRUaddr, self.words_state[index][self.ways-1][:]
     
-cache = proc_cache(512, 2,8, 8192)
-tag, index, offset = cache.parseAddr(1024)
+cache = proc_cache(512, 4, 16, 8192)
+tag, index, offset = cache.parseAddr(30)
 print(tag)
 print(index)

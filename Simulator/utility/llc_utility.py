@@ -273,7 +273,7 @@ class dir_cache:
         temp_owner = self.owner[index][match_way]
         temp_msg_dst = self.msg_dst[index][match_way]
         temp_inv_cnt = self.inv_cnt[index][match_way]
-        for i in range(match_way):
+        for i in range(match_way - 1, -1, -1):
             self.words_state[index][i+1] = self.words_state[index][i][:]
             self.line_state[index][i+1] = self.line_state[index][i]
             self.line_tag[index][i+1] = self.line_tag[index][i]

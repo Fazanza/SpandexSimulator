@@ -140,7 +140,7 @@ class GPU_cache:
         assert match_way != -1, "Error! GPU line miss in cache during renew access"
         temp_word_state = self.words_state[index][match_way][:]
         temp_line_state = self.line_state[index][match_way]
-        for i in range(match_way):
+        for i in range(match_way - 1, -1, -1):
             self.line_state[index][i+1] = self.line_state[index][i]
             self.words_state[index][i+1] = self.words_state[index][i][:]
             self.line_tag[index][i+1] = self.line_tag[index][i]

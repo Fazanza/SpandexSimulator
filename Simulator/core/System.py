@@ -132,7 +132,7 @@ class System:
 
             #self.Core_List = self.round_robin(self.Core_List)
             self.system_clk = self.system_clk + 1
-            if self.system_clk > 54:
+            if self.system_clk > 28:
                 print("Test !")
             if self.system_clk > self.overtime:
                 print("Overtime !")

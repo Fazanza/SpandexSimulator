@@ -100,7 +100,7 @@ class CPU_cache:
         match_way = self.searchSet(index, tag)
         assert match_way != -1, "Error! CPU line miss in cache during renew access"
         temp_line_state = self.line_state[index][match_way]
-        for i in range(match_way):
+        for i in range(match_way - 1, -1, -1):
             self.line_state[index][i+1] = self.line_state[index][i]
             self.line_tag[index][i+1] = self.line_tag[index][i]
         self.line_state[index][0] = temp_line_state
