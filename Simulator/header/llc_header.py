@@ -13,6 +13,7 @@ class State(Enum):
     IO = auto()
     SO = auto()
     SV = auto()
+    OO = auto()
     OVS = auto()
     OS = auto()
     OV = auto()

@@ -34,6 +34,7 @@ class System:
         if LLC.rep_msg_box != None:
             LLC.rep_msg_box.print_all()
         LLC.LLC_run()
+        print(LLC.cache.getState_line(7))
         # evict_addr, evict_line_state, evict_word_state, evict_sharer, evict_owner = LLC.cache.getLRU(137)
         # print(evict_addr)
         # print(LLC.cache.getState_line(evict_addr))
@@ -77,7 +78,7 @@ class System:
         CPU = self.Device_Map.search(CPU_Node)
         CPU.CPU_run()
         CPU.current_inst.print_Inst()
-        print(CPU.cache.getState_line(137))
+        print(CPU.cache.getState_line(7))
         print(f"CPU retry = {CPU.retry}")
         # do barrier
         CPU_barrier = CPU.get_barrier()
@@ -91,12 +92,16 @@ class System:
         # do generate msg
         while CPU.get_generated_msg() != None:
             generated_msg = CPU.get_generated_msg()
+            print("XXX")
+            generated_msg.print_msg()
             msg_class = self.MsgClassify.get_value(generated_msg.msg_type)
             
             if msg_class == msg_class.Request: # send request to other Node
                 assert(generated_msg.dst == Node.LLC), "Error! CPU is sending request to Node other than LLC"
                 if self.Device_Map.search(Node.LLC).receieve_req_msg(self.TPU.translate_msg(generated_msg)) == True:
                     CPU.take_generated_msg() # pop from LLC generated_msg_queue
+                else:
+                    break
             #
             elif msg_class == msg_class.Response: # send response to other Node
                 if self.is_member(generated_msg.dst, self.CPU_List):
@@ -127,8 +132,8 @@ class System:
 
             #self.Core_List = self.round_robin(self.Core_List)
             self.system_clk = self.system_clk + 1
-            if self.system_clk > 82:
-                print("Overtime !")
+            if self.system_clk > 54:
+                print("Test !")
             if self.system_clk > self.overtime:
                 print("Overtime !")
                 quit()

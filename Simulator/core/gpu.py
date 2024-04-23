@@ -235,7 +235,7 @@ class GPU_Controller:
         if rep_msg != None:
             current_state = self.get_current_state(rep_msg)
             result = self.do_transition(current_state, rep_msg)
-            assert result != type.Error, "Error! GPU wrong when take rep msg"
+            assert result != type.Error, f"Error! GPU wrong when take rep msg, {current_state}, {rep_msg.msg_type}, {rep_msg.addr}, {rep_msg.src}"
             self.cache.renewAccess(rep_msg.addr)
         
         # Second execute an instruction
