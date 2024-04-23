@@ -106,11 +106,11 @@ def main_test3():
     llc_max_delay = 6
     llc_mem_delay = 10
 
-    cpu0_trace = "../Testcase/4c1g_3/cpu0.txt"
-    cpu1_trace = "../Testcase/4c1g_3/cpu1.txt"
-    cpu2_trace = "../Testcase/4c1g_3/cpu2.txt"
-    cpu3_trace = "../Testcase/4c1g_3/cpu3.txt"
-    gpu0_trace = "../Testcase/4c1g_3/gpu0.txt"
+    cpu0_trace = "Testcase/4c1g_3/cpu0.txt"
+    cpu1_trace = "Testcase/4c1g_3/cpu1.txt"
+    cpu2_trace = "Testcase/4c1g_3/cpu2.txt"
+    cpu3_trace = "Testcase/4c1g_3/cpu3.txt"
+    gpu0_trace = "Testcase/4c1g_3/gpu0.txt"
 
     # instantiate the object
     LLC  = LLC_Controller(llc_cache_size, ways, line_size, memory_size, llc_req_box_size, llc_min_delay, llc_max_delay, llc_mem_delay)
@@ -324,4 +324,4 @@ def main_test7():
     return 0
 
 if __name__ == '__main__':
-    main_test7()
+    main_test1()
