@@ -1,6 +1,7 @@
 ## File Structure
 
 Below is the file structure and descriptions of each component in the project:
+The whole simulator is located under `Simulator` Folder
 
 - `core/` - The simulator itself, including the LLC, CPU, GPU, and SYSTEM components.
 - `header/` - Header files used within the Simulator.
@@ -16,6 +17,7 @@ To run the simulation, follow these steps:
 1. **Execute the Test**
    - Run the command below in your terminal. This will execute the simulation and save the output to `output.txt`.
      ```bash
+     cd Simulator
      python3 -m top.Top > output.txt
      ```
 
